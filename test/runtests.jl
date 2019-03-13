@@ -1,8 +1,10 @@
+using Statistics
 using GroupSummaries
 using GroupSummaries: sac, _locreg
 using Test
 using RDatasets
 using IndexedTables
+
 school = table(RDatasets.dataset("mlmRev","Hsb82"))
 t = setcol(school, :x => rand(1:100, length(school)))
 
