@@ -1,0 +1,10 @@
+name = "GroupSummaries"
+uuid = "ba7d4641-94f4-5bcf-8684-37ba860b1597"
+authors = ["Pietro Vertechi <pietro.vertechi@neuro.fchampalimaud.org>"]
+version = "0.1.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
