@@ -14,4 +14,12 @@ summaries(data, across, mean)
 
 data = rows(t, (:MAch, :SSS))
 across = rows(t, :School)
+summaries(GroupSummaries.density, data, across, (mean, sem))
+
+data = rows(t, (:MAch, :SSS))
+across = rows(t, :School)
+summaries(GroupSummaries.hazard, data, across, (mean, sem))
+
+data = rows(t, (:MAch, :SSS))
+across = rows(t, :School)
 summaries(locreg, data, across)

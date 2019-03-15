@@ -12,16 +12,16 @@ function getfunc(funcs::NTuple{N, Any}, i) where {N}
     return funcs[i]
 end
 
-function summaries(data, across, funcs...; perm = sortperm(across))
+function summaries(data, across, funcs...; perm = sortperm(across), filter = isfinite)
     itr = finduniquesorted(across, perm)
     cols = tupleofarrays(data)
     n = length(cols)
     nf = length(funcs)
-    collect_columns(key => ntuple(i -> apply(getfunc(funcs, i), cols[i][idxs]), n) for (key, idxs) in itr)
+    collect_columns(key => ntuple(i -> apply(getfunc(funcs, i), Base.filter(filter, view(cols[i], idxs))), n) for (key, idxs) in itr)
 end
 
-function summaries(f::Function, data, across, funcs...; perm = sortperm(across), axis = :continuous)
-    xaxis = compute_axis(tupleofarrays(data)[1], axis)
+function summaries(f::Function, data, across, funcs...; perm = sortperm(across), axis = nothing, npoints = 100)
+    xaxis = isnothing(axis) ? compute_axis(f, tupleofarrays(data)[1]; npoints = 100) : axis
     res = splitapply(f, data, across, xaxis; perm = perm)
     summary = res.second
     summarydata = tupleofarrays(summary)[2:end]
@@ -29,16 +29,11 @@ function summaries(f::Function, data, across, funcs...; perm = sortperm(across),
     summaries(summarydata, summaryacross, funcs...)
 end
 
-function compute_axis(x, axis::Symbol)
-    if axis == :auto
-        axis = ifelse(eltype(x) <: Union{Missing, Number}, :continuous, :discrete)
-    end
-    axis == :continuous && return range(extrema(x)...; length = 100)
-    axis == :discrete && return unique(x)
-    error("Only :auto, :continuous and :discrete axis supported")
-end
-
-compute_axis(x, axis::AbstractVector) = axis
+compute_axis(f::Function, x::AbstractVector; kwargs...) = compute_axis(x; kwargs...)
+compute_axis(x::AbstractVector{<:Union{Real, Missing}}; npoints = 100) = range(extrema(x)...; length = npoints)
+compute_axis(x::AbstractVector) = unique(x)
+compute_axis(x::PooledVector) = unique(x)
 
 tupleofarrays(s::Union{Tuple, NamedTuple}) = Tuple(s)
 tupleofarrays(s::StructVector) = Tuple(fieldarrays(s))
+tupleofarrays(s::Vector) = (s,)
