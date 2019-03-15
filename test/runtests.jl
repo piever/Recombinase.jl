@@ -1,6 +1,6 @@
 using Statistics
 using GroupSummaries
-using GroupSummaries: sac, _locreg
+using GroupSummaries: summaries, locreg
 using Test
 using RDatasets
 using IndexedTables
@@ -8,8 +8,10 @@ using IndexedTables
 school = table(RDatasets.dataset("mlmRev","Hsb82"))
 t = setcol(school, :x => rand(1:100, length(school)))
 
-@testset "GroupSummaries.jl" begin
-    data = rows(t, (:x, :SSS))
-    across = rows(t, :School)
-    sac(_locreg, data, across, sortperm(across), mean)    
-end
+data = rows(t, (:MAch, :SSS))
+across = rows(t, :School)
+summaries(data, across, mean)
+
+data = rows(t, (:MAch, :SSS))
+across = rows(t, :School)
+summaries(locreg, data, across)
