@@ -13,10 +13,13 @@ apply(f::Tup, val) = map(t -> t(val), f)
 
 compute_error(across::AbstractVector, cols::AbstractVector...; kwargs...) = compute_error(across, cols; kwargs...)
 
-function compute_error(across::AbstractVector, cols::Tup; perm = sortperm(across), filter = isfinite, summarize = mean)
+function compute_error(across::AbstractVector, cols::Tup; perm = sortperm(across), filter = isfinite, summarize = (mean, sem))
     itr = finduniquesorted(across, perm)
     collect_columns(key => map(col -> apply(summarize, Base.filter(filter, view(col, idxs))), cols) for (key, idxs) in itr)
 end
+
+compute_error(t::IndexedTable; across, select, kwargs...) =
+    compute_error(rows(t, across), columntuple(t, select); perm=sortpermby(t, across), kwargs...)
 
 compute_error(f::FunctionOrAnalysis, across::AbstractVector, cols::AbstractVector...; kwargs...) = compute_error(f, across, cols; kwargs...)
 
@@ -27,5 +30,12 @@ function compute_error(f::FunctionOrAnalysis, across::AbstractVector, cols::Tup;
     compute_error(tupleofarrays(summary)...; kwargs...)
 end
 
+compute_error(f::FunctionOrAnalysis, t::IndexedTable; across, select, kwargs...) =
+    compute_error(f, rows(t, across), columntuple(t, select); perm=sortpermby(t, across), kwargs...)
+
 tupleofarrays(s::Tup) = Tuple(s)
 tupleofarrays(s::StructVector) = Tuple(fieldarrays(s))
+
+to_tuple(s::Tup) = s
+to_tuple(v::AbstractVector) = (v,)
+columntuple(args...) = to_tuple(columns(args...))
