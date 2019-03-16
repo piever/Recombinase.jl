@@ -1,6 +1,7 @@
 using Statistics
+using StatsBase
 using GroupSummaries
-using GroupSummaries: summaries, locreg
+using GroupSummaries: summaries
 using Test
 using RDatasets
 using IndexedTables
@@ -16,10 +17,14 @@ data = rows(t, (:MAch, :SSS))
 across = rows(t, :School)
 summaries(GroupSummaries.density, data, across, (mean, sem))
 
+data = rows(t, (:x,))
+across = rows(t, :School)
+summaries(GroupSummaries.frequency, data, across, (mean, sem))
+
 data = rows(t, (:MAch, :SSS))
 across = rows(t, :School)
 summaries(GroupSummaries.hazard, data, across, (mean, sem))
 
 data = rows(t, (:MAch, :SSS))
 across = rows(t, :School)
-summaries(locreg, data, across)
+summaries(GroupSummaries.localregression, data, across)

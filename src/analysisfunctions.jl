@@ -10,16 +10,21 @@ Analysis(a::Analysis; kwargs...) = Analysis(a.f, merge(a.kwargs, values(kwargs))
 
 Base.get(a::Analysis, s::Symbol, def) = get(a.kwargs, s, def)
 Base.get(f::Function, a::Analysis, s::Symbol) = get(f, a.kwargs, s)
+function set(f::Function, a::Analysis, s::Symbol)
+    val = get(f, a, s)
+    nt = NamedTuple{(s,)}((val,))
+    a(; nt...)
+end
 
 const FunctionOrAnalysis = Union{Function, Analysis}
 
 compute_axis(f::Function, x::AbstractVector) = compute_axis(Analysis(f), x)
 
 function compute_axis(f::Analysis, x::AbstractVector)
-    def = get(f, :axis, nothing)
-    isnothing(def) || return f
-    npoints = get(f, :npoints, 100)
-    Analysis(f, axis = range(extrema(x)...; length = npoints))
+    set(f, :axis) do
+        npoints = get(f, :npoints, 100)
+        range(extrema(x)...; length = npoints)
+    end
 end
 
 function _expectedvalue(t; axis, estimator = mean)
@@ -29,7 +34,7 @@ function _expectedvalue(t; axis, estimator = mean)
 end
 
 const expectedvalue = Analysis(_expectedvalue)
-compute_axis(f::Analysis{typeof(_expectedvalue)}, x::AbstractVector) = get(() -> unique(x), f, :axis)
+compute_axis(f::Analysis{typeof(_expectedvalue)}, x::AbstractVector) = set(() -> unique(x), f, :axis)
 
 function _localregression(t; axis, kwargs...)
     x, y = tupleofarrays(t)
@@ -53,7 +58,7 @@ end
 
 const density = Analysis(_density)
 function compute_axis(f::Analysis{typeof(_density)}, x::AbstractVector)
-    get(f, :axis) do
+    set(f, :axis) do
         start, stop = extrema(kde(x).x)
         npoints = get(f, :npoints, 100)
         range(start, stop, length = npoints)
@@ -61,13 +66,13 @@ function compute_axis(f::Analysis{typeof(_density)}, x::AbstractVector)
 end
 
 function _frequency(t; axis)
-    x = tupleofarrays(s)[1]
+    x = tupleofarrays(t)[1]
     c = countmap(x) 
     StructVector((axis, [get(c, x, 0) for x in axis]))
 end
 
 const frequency = Analysis(_frequency)
-compute_axis(f::Analysis{typeof(_frequency)}, x::AbstractVector) = get(() -> unique(x), f, :axis)
+compute_axis(f::Analysis{typeof(_frequency)}, x::AbstractVector) = set(() -> unique(x), f, :axis)
 
 function _cumulative(t; axis, kwargs...)
     x = tupleofarrays(t)[1]
@@ -77,12 +82,14 @@ end
 
 const cumulative = Analysis(_cumulative)
 
-function hazard(t; axis, kwargs...)
-    pdf = density(t; axis = axis, kwargs...)
-    cdf = cumulative(t; axis = axis)
+function _hazard(t; axis, kwargs...)
+    pdf = density(; axis = axis, kwargs...)(t)
+    cdf = cumulative(; axis = axis)(t)
     pdfs = tupleofarrays(pdf)[2]
     cdfs = tupleofarrays(cdf)[2]
     bs = step(axis)
     haz = @. pdfs/(1 + bs * pdfs - cdfs)
     StructVector((axis, haz))
 end
+
+const hazard = Analysis(_hazard)
