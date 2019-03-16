@@ -1,15 +1,15 @@
 using Statistics, StatsBase
-using GroupSummaries: summaries, density, frequency, hazard, localregression
+using GroupSummaries: compute_error, density, frequency, hazard, localregression
 using RDatasets
 
 t = RDatasets.dataset("mlmRev","Hsb82")
 
-summaries(t.School, t.MAch, t.SSS)
+compute_error(t.School, t.MAch, t.SSS)
 
-summaries(density, t.School, t.MAch, summarize = (mean, sem))
+compute_error(density, t.School, t.MAch)
 
-summaries(frequency, t.School, rand(1:100, length(t.School)), summarize = (mean, sem))
+compute_error(frequency, t.School, rand(1:100, length(t.School)))
 
-summaries(hazard, t.School, t.MAch, summarize = (mean, sem))
+compute_error(hazard, t.School, t.MAch)
 
-summaries(localregression, t.School, t.MAch, t.SSS)
+compute_error(localregression, t.School, t.MAch, t.SSS)

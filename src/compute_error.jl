@@ -11,20 +11,20 @@ end
 apply(f, val) = f(val)
 apply(f::Tup, val) = map(t -> t(val), f)
 
-summaries(across::AbstractVector, cols::AbstractVector...; kwargs...) = summaries(across, cols; kwargs...)
+compute_error(across::AbstractVector, cols::AbstractVector...; kwargs...) = compute_error(across, cols; kwargs...)
 
-function summaries(across::AbstractVector, cols::Tup; perm = sortperm(across), filter = isfinite, summarize = mean)
+function compute_error(across::AbstractVector, cols::Tup; perm = sortperm(across), filter = isfinite, summarize = mean)
     itr = finduniquesorted(across, perm)
     collect_columns(key => map(col -> apply(summarize, Base.filter(filter, view(col, idxs))), cols) for (key, idxs) in itr)
 end
 
-summaries(f::FunctionOrAnalysis, across::AbstractVector, cols::AbstractVector...; kwargs...) = summaries(f, across, cols; kwargs...)
+compute_error(f::FunctionOrAnalysis, across::AbstractVector, cols::AbstractVector...; kwargs...) = compute_error(f, across, cols; kwargs...)
 
-function summaries(f::FunctionOrAnalysis, across::AbstractVector, cols::Tup; perm = sortperm(across), kwargs...)
+function compute_error(f::FunctionOrAnalysis, across::AbstractVector, cols::Tup; perm = sortperm(across), kwargs...)
     a = compute_axis(f, cols...)
     res = splitapply(a, across, cols; perm = perm)
     summary = res.second
-    summaries(tupleofarrays(summary)...; kwargs...)
+    compute_error(tupleofarrays(summary)...; kwargs...)
 end
 
 tupleofarrays(s::Tup) = Tuple(s)
