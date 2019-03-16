@@ -20,19 +20,14 @@ function summaries(data, across, funcs...; perm = sortperm(across), filter = isf
     collect_columns(key => ntuple(i -> apply(getfunc(funcs, i), Base.filter(filter, view(cols[i], idxs))), n) for (key, idxs) in itr)
 end
 
-function summaries(f::Function, data, across, funcs...; perm = sortperm(across), axis = nothing, npoints = 100)
-    xaxis = isnothing(axis) ? compute_axis(f, tupleofarrays(data)[1]; npoints = 100) : axis
-    res = splitapply(f, data, across, xaxis; perm = perm)
+function summaries(f::FunctionOrAnalysis, data, across, funcs...; perm = sortperm(across))
+    a = compute_axis(f, tupleofarrays(data)[1])
+    res = splitapply(a, data, across; perm = perm)
     summary = res.second
     summarydata = tupleofarrays(summary)[2:end]
     summaryacross = tupleofarrays(summary)[1]
     summaries(summarydata, summaryacross, funcs...)
 end
-
-compute_axis(f::Function, x::AbstractVector; kwargs...) = compute_axis(x; kwargs...)
-compute_axis(x::AbstractVector{<:Union{Real, Missing}}; npoints = 100) = range(extrema(x)...; length = npoints)
-compute_axis(x::AbstractVector) = unique(x)
-compute_axis(x::PooledVector) = unique(x)
 
 tupleofarrays(s::Union{Tuple, NamedTuple}) = Tuple(s)
 tupleofarrays(s::StructVector) = Tuple(fieldarrays(s))

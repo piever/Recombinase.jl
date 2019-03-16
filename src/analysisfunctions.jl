@@ -1,12 +1,39 @@
-function locreg(t, xaxis; estimator = mean)
+struct Analysis{F, NT<:NamedTuple}
+    f::F
+    kwargs::NT
+end
+
+Analysis(f; kwargs...) = Analysis(f, values(kwargs))
+Analysis(a::Analysis; kwargs...) = Analysis(a.f, merge(a.kwargs, values(kwargs))) 
+(a::Analysis)(; kwargs...) = Analysis(a; kwargs...)
+(a::Analysis)(args...) = a.f(args...; a.kwargs...)
+
+Base.get(a::Analysis, s::Symbol, def) = get(a.kwargs, s, def)
+Base.get(f::Function, a::Analysis, s::Symbol) = get(f, a.kwargs, s)
+
+const FunctionOrAnalysis = Union{Function, Analysis}
+
+compute_axis(f::Function, x::AbstractVector) = compute_axis(Analysis(f), x)
+
+function compute_axis(f::Analysis, x::AbstractVector)
+    def = get(f, :axis, nothing)
+    isnothing(def) || return f
+    npoints = get(f, :npoints, 100)
+    Analysis(f, axis = range(extrema(x)...; length = npoints))
+end
+
+function _expectedvalue(t; axis, estimator = mean)
     x, y = tupleofarrays(t)
     itr = finduniquesorted(x)
     collect_columns((key, estimator(y[idxs])) for (key, idxs) in itr)
 end
 
-function locreg(t, xaxis::AbstractRange; kwargs...)
+const expectedvalue = Analysis(_expectedvalue)
+compute_axis(f::Analysis{typeof(_expectedvalue)}, x::AbstractVector) = get(() -> unique(x), f, :axis)
+
+function _localregression(t; axis, kwargs...)
     x, y = tupleofarrays(t)
-    within = filter(t -> minimum(x)<= t <= maximum(x), xaxis)
+    within = filter(t -> minimum(x)<= t <= maximum(x), axis)
     if length(within) > 0
         model = loess(convert(Vector{Float64}, x), convert(Vector{Float64}, y); kwargs...)
         prediction = predict(model, within)
@@ -16,38 +43,46 @@ function locreg(t, xaxis::AbstractRange; kwargs...)
     StructVector((within, prediction))
 end
 
-function density(t, xaxis::AbstractRange; kwargs...)
+const localregression = Analysis(_localregression)
+
+function _density(t; axis, kwargs...)
     x = tupleofarrays(t)[1]
-    data = pdf(kde(x; kwargs...), xaxis)
-    StructVector((xaxis, data))
+    data = pdf(kde(x; kwargs...), axis)
+    StructVector((axis, data))
 end
 
-function density(t, xaxis)
+const density = Analysis(_density)
+function compute_axis(f::Analysis{typeof(_density)}, x::AbstractVector)
+    get(f, :axis) do
+        start, stop = extrema(kde(x).x)
+        npoints = get(f, :npoints, 100)
+        range(start, stop, length = npoints)
+    end
+end
+
+function _frequency(t; axis)
     x = tupleofarrays(s)[1]
     c = countmap(x) 
-    StructVector((xaxis, [get(c, x, 0) for x in xaxis]))
+    StructVector((axis, [get(c, x, 0) for x in axis]))
 end
 
-function compute_axis(::typeof(density), x::AbstractVector{<:Union{Real, Missing}}; npoints = 100)
-    start, stop = extrema(kde(x).x)
-    range(start, stop, length = npoints)
-end
-compute_axis(::typeof(density), x::PooledVector; kwargs...) = compute_axis(x; kwargs...)
+const frequency = Analysis(_frequency)
+compute_axis(f::Analysis{typeof(_frequency)}, x::AbstractVector) = get(() -> unique(x), f, :axis)
 
-function cumulative(t, xaxis; kwargs...)
+function _cumulative(t; axis, kwargs...)
     x = tupleofarrays(t)[1]
-    data = ecdf(x)(xaxis)
-    StructVector((xaxis, data))
+    data = ecdf(x)(axis)
+    StructVector((axis, data))
 end
 
-hazard(t, xaxis) = hazard(t, xaxis, 1)
-hazard(t, xaxis::AbstractRange; kwargs...) = hazard(t, xaxis, step(xaxis); kwargs...)
+const cumulative = Analysis(_cumulative)
 
-function hazard(t, xaxis, step; kwargs...)
-    pdf = density(t, xaxis; kwargs...)
-    cdf = cumulative(t, xaxis)
+function hazard(t; axis, kwargs...)
+    pdf = density(t; axis = axis, kwargs...)
+    cdf = cumulative(t; axis = axis)
     pdfs = tupleofarrays(pdf)[2]
     cdfs = tupleofarrays(cdf)[2]
-    haz = @. pdfs/(1 + step * pdfs - cdfs)
-    StructVector((xaxis, haz))
+    bs = step(axis)
+    haz = @. pdfs/(1 + bs * pdfs - cdfs)
+    StructVector((axis, haz))
 end
