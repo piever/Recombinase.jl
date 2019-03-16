@@ -6,26 +6,14 @@ using Test
 using IndexedTables
 using RDatasets
 
-school = table(RDatasets.dataset("mlmRev","Hsb82"))
+t = RDatasets.dataset("mlmRev","Hsb82")
 
-t = setcol(school, :x => rand(1:100, length(school)))
+summaries(t.School, t.MAch, t.SSS)
 
-x, y = columns(t, (:MAch, :SSS))
-across = column(t, :School)
-summaries(across, x, y) 
+summaries(GroupSummaries.density, t.School, t.MAch, summarize = (mean, sem))
 
-data = column(t, :MAch)
-across = column(t, :School)
-summaries(GroupSummaries.density, across, data, summarize = (mean, sem))
+summaries(GroupSummaries.frequency, t.School, rand(1:100, length(t.School)), summarize = (mean, sem))
 
-data = column(t, :x)
-across = column(t, :School)
-summaries(GroupSummaries.frequency, across, data, summarize = (mean, sem))
+summaries(GroupSummaries.hazard, t.School, t.MAch, summarize = (mean, sem))
 
-data = column(t, :MAch)
-across = column(t, :School)
-summaries(GroupSummaries.hazard, across, data, summarize = (mean, sem))
-
-x, y = columns(t, (:MAch, :SSS))
-across = column(t, :School)
-summaries(GroupSummaries.localregression, across, x, y)
+summaries(GroupSummaries.localregression, t.School, t.MAch, t.SSS)
