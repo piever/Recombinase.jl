@@ -18,6 +18,7 @@ function compute_error(across::AbstractVector, cols::Tup; perm = sortperm(across
     collect_columns(key => map(col -> apply(summarize, Base.filter(filter, view(col, idxs))), cols) for (key, idxs) in itr)
 end
 
+compute_error(::Nothing, t::IndexedTable; kwargs...) = compute_error(t; kwargs...)
 compute_error(t::IndexedTable; across, select, kwargs...) =
     compute_error(rows(t, across), columntuple(t, select); perm=sortpermby(t, across), kwargs...)
 

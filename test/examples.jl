@@ -1,9 +1,10 @@
 using Statistics, StatsBase
-using GroupSummaries
+using GroupSummaries: Group, plot2D, datafolder
 using GroupSummaries: compute_error, density, frequency, hazard, localregression
-using RDatasets
+using JuliaDB
 
-t = RDatasets.dataset("mlmRev","Hsb82")
+data = loadtable(joinpath(datafolder, "school.csv"))
+t = columns(data)
 
 compute_error(t.School, t.MAch, t.SSS)
 
@@ -15,13 +16,13 @@ compute_error(hazard, t.School, t.MAch)
 
 compute_error(localregression, t.School, t.MAch, t.SSS)
 
-using IndexedTables, Plots
+using Plots
 
-data = table(t)
-
-args, kwargs = GroupSummaries.plot2D(
+args, kwargs = plot2D(
     localregression,
     data,
+    Group(color = :Sx, linewidth = :Sector),
+    color = [:red, :black],
     across = :School,
     select = (:MAch, :SSS),
     ribbon = true
@@ -29,8 +30,9 @@ args, kwargs = GroupSummaries.plot2D(
 
 plot(args...; kwargs...)
 
-args, kwargs = GroupSummaries.plot2D(
+args, kwargs = plot2D(
     data,
+    Group(markercolor = :Sx, color = :Sx),
     across = :School,
     select = (:MAch, :SSS),
 )
