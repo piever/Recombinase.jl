@@ -34,7 +34,7 @@ function _expectedvalue(x, y; axis, estimator = mean)
 end
 
 const expectedvalue = Analysis(_expectedvalue)
-compute_axis(f::Analysis{typeof(_expectedvalue)}, x) = set(() -> unique(x), f, :axis)
+compute_axis(f::Analysis{typeof(_expectedvalue)}, x::AbstractVector) = set(() -> unique(x), f, :axis)
 
 function _localregression(x, y; axis, kwargs...)
     within = filter(t -> minimum(x)<= t <= maximum(x), axis)
@@ -55,7 +55,7 @@ function _density(x; axis, kwargs...)
 end
 
 const density = Analysis(_density)
-function compute_axis(f::Analysis{typeof(_density)}, x)
+function compute_axis(f::Analysis{typeof(_density)}, x::AbstractVector)
     set(f, :axis) do
         start, stop = extrema(kde(x).x)
         npoints = get(f, :npoints, 100)
@@ -69,7 +69,7 @@ function _frequency(x; axis)
 end
 
 const frequency = Analysis(_frequency)
-compute_axis(f::Analysis{typeof(_frequency)}, x) = set(() -> unique(x), f, :axis)
+compute_axis(f::Analysis{typeof(_frequency)}, x::AbstractVector) = set(() -> unique(x), f, :axis)
 
 function _cumulative(x; axis, kwargs...)
     data = ecdf(x)(axis)
