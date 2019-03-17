@@ -31,6 +31,16 @@ args, kwargs = series2D(
 plot(args...; kwargs...)
 
 args, kwargs = series2D(
+    localregression,
+    data,
+    Group(color = :Sx, linewidth = :Sector),
+    color = [:red, :black],
+    select = (:MAch, :SSS),
+    ribbon = true
+)
+plot(args...; kwargs...)
+
+args, kwargs = series2D(
     data,
     Group(markercolor = :Sx, color = :Sx),
     across = :School,
