@@ -1,5 +1,5 @@
 using Statistics, StatsBase
-using GroupSummaries: Group, plot2D, datafolder
+using GroupSummaries: Group, series2D, datafolder
 using GroupSummaries: compute_error, density, frequency, hazard, localregression
 using JuliaDB
 
@@ -18,7 +18,7 @@ compute_error(localregression, t.School, t.MAch, t.SSS)
 
 using Plots
 
-args, kwargs = plot2D(
+args, kwargs = series2D(
     localregression,
     data,
     Group(color = :Sx, linewidth = :Sector),
@@ -30,7 +30,7 @@ args, kwargs = plot2D(
 
 plot(args...; kwargs...)
 
-args, kwargs = plot2D(
+args, kwargs = series2D(
     data,
     Group(markercolor = :Sx, color = :Sx),
     across = :School,

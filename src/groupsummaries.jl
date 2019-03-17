@@ -9,7 +9,7 @@ end
 
 Group(s) = Group((; color = s))
 
-function plot2D(s::StructVector{<:Pair}; ribbon = false)
+function series2D(s::StructVector{<:Pair}; ribbon = false)
     cols = fieldarrays(s.second)
     kwargs = Dict{Symbol, Any}()
     if length(cols) == 1
@@ -27,17 +27,17 @@ function plot2D(s::StructVector{<:Pair}; ribbon = false)
     return (x, y), kwargs
 end
 
-plot2D(t::IndexedTable, g = Group(); kwargs...) = plot2D(nothing, t, g; kwargs...)
+series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
-function plot2D(f, t::IndexedTable, g = Group(); across, select, ribbon = false, filter = isfinite, summarize = (mean, sem), kwargs...)
+function series2D(f, t::IndexedTable, g = Group(); across, select, ribbon = false, filter = isfinite, summarize = (mean, sem), kwargs...)
     group = g.kwargs
-    isempty(group) && return plot2D(compute_error(f, t; across=across, select=select, filter=filter, summarize=summarize), ribbon = ribbon)
+    isempty(group) && return series2D(compute_error(f, t; across=across, select=select, filter=filter, summarize=summarize), ribbon = ribbon)
 
     by = Tuple(unique(group))
     perm = sortpermby(t, by)
     itr = finduniquesorted(rows(t, by), perm)
     data = collect_columns_flattened(key => compute_error(f, t[idxs]; across=across, select=select,  filter=filter, summarize=summarize) for (key, idxs) in itr)
-    plot_args, plot_kwargs = plot2D(data.second; ribbon = ribbon)
+    plot_args, plot_kwargs = series2D(data.second; ribbon = ribbon)
     plot_kwargs[:group] = data.first
     grpd = collect_columns(key for (key, _) in itr)
     style_kwargs = Dict(kwargs)
