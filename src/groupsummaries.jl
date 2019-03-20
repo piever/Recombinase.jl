@@ -7,7 +7,7 @@ struct Group{NT}
     end
 end
 
-Group(s) = Group((; color = s))
+Group(s) = Group(color = s)
 
 function series2D(s::StructVector{<:Pair}; ribbon = false)
     cols = fieldarrays(s.second)
@@ -36,7 +36,7 @@ function series2D(f, t::IndexedTable, g = Group(); select, across=(), ribbon = f
     group = g.kwargs
     isempty(group) && return series2D(compute_error(f, t; across=across, select=select, filter=filter, summarize=summarize), ribbon = ribbon)
 
-    by = Tuple(unique(group))
+    by = _flatten(group)
     perm = sortpermby(t, by)
     itr = finduniquesorted(rows(t, by), perm)
     data = collect_columns_flattened(key => compute_error(f, t[idxs]; across=_slice(across, idxs), select=select,  filter=filter, summarize=summarize) for (key, idxs) in itr)
@@ -45,7 +45,7 @@ function series2D(f, t::IndexedTable, g = Group(); select, across=(), ribbon = f
     grpd = collect_columns(key for (key, _) in itr)
     style_kwargs = Dict(kwargs)
     for (key, val) in pairs(group)
-        col = getproperty(grpd, val)
+        col = rows(grpd, val)
         s = unique(sort(col))
         d = Dict(zip(s, 1:length(s)))
         style = get(style_kwargs, key) do
@@ -58,3 +58,8 @@ end
 
 _slice(t::AbstractVector, idxs) = t[idxs]
 _slice(t, idxs) = t
+
+_flatten(t) = IterTools.imap(to_tuple, t) |>
+    Iterators.flatten |>
+    IterTools.distinct |>
+    Tuple

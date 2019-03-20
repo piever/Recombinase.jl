@@ -38,5 +38,5 @@ tupleofarrays(s::Tup) = Tuple(s)
 tupleofarrays(s::StructVector) = Tuple(fieldarrays(s))
 
 to_tuple(s::Tup) = s
-to_tuple(v::AbstractVector) = (v,)
+to_tuple(v) = (v,)
 columntuple(args...) = to_tuple(columns(args...))

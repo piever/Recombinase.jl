@@ -1,5 +1,6 @@
 module GroupSummaries
 
+using IterTools
 using Statistics
 using StatsBase: countmap, ecdf, sem
 using Loess: loess, predict

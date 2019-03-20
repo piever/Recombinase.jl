@@ -6,7 +6,7 @@ using JuliaDB
 data = loadtable(joinpath(datafolder, "school.csv"))
 t = columns(data)
 
-compute_error(t.School, t.MAch, t.SSS)
+res = compute_error(t.School, t.SSS, t.CSES, summarize=(median, std))
 
 compute_error(density, t.School, t.MAch)
 
@@ -21,8 +21,8 @@ using Plots
 args, kwargs = series2D(
     localregression,
     data,
-    Group(color = :Sx, linewidth = :Sector),
-    color = [:red, :black],
+    Group((:Sx, :Sector)),
+    # color = [:red, :black],
     across = :School,
     select = (:MAch, :SSS),
     ribbon = true
@@ -33,9 +33,10 @@ plot(args...; kwargs...)
 args, kwargs = series2D(
     localregression,
     data,
-    Group(color = :Sx, linewidth = :Sector),
+    Group(color = :Sx, linestyle = :Sector),
     color = [:red, :black],
     select = (:MAch, :SSS),
+    across = :School,
     ribbon = true
 )
 plot(args...; kwargs...)

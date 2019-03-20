@@ -18,6 +18,7 @@ end
 
 const FunctionOrAnalysis = Union{Function, Analysis}
 
+# TODO compute axis if called standalone!
 compute_axis(f::Function, args...) = compute_axis(Analysis(f), args...)
 
 function compute_axis(f::Analysis, args...)
