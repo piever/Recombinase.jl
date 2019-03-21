@@ -20,7 +20,7 @@ functions plotters.
 ## Examples
 
 ```julia
-using StatsPlots, GroupSummaries, JuliaDB
+using StatsPlots, GroupSummaries, JuliaDB, Interact
 school = loadtable(joinpath(GroupSummaries.datafolder, "school.csv"))
 plotters = [plot, scatter, groupedbar]
 GroupSummaries.gui(school, plotters)
