@@ -23,7 +23,7 @@ functions plotters.
 using StatsPlots, GroupSummaries, JuliaDB
 school = loadtable(joinpath(GroupSummaries.datafolder, "school.csv"))
 plotters = [plot, scatter, groupedbar]
-gui(school, plotters)
+GroupSummaries.gui(school, plotters)
 ```
 """
 function gui(data, plotters)
