@@ -38,7 +38,7 @@ args, kwargs = series2D(
     ribbon = true
    )
 plot(args...; kwargs..., legend = :bottomright)
-    
+
 args, kwargs = series2D(
     density(bandwidth = 1),
     data,
@@ -48,7 +48,7 @@ args, kwargs = series2D(
     ribbon = true
    )
 plot(args...; kwargs...)
-    
+
 args, kwargs = series2D(
     expectedvalue,
     data,
@@ -60,3 +60,10 @@ args, kwargs = series2D(
 groupedbar(args...; kwargs...)
 
 ##
+
+using Interact, StatsPlots, Blink
+
+using GroupSummaries
+ui = GroupSummaries.gui(data, [plot, scatter, groupedbar]);
+w = Window()
+body!(w, ui)
