@@ -34,8 +34,11 @@ function series2D(f, t::IndexedTable, g = Group(); select, across=(), ribbon = f
     summarize = something(summarize, (across == ()) ? mean : (mean, sem))
     across == () && (across = isnothing(f) ? (1:length(t)) : fill(nothing, length(t)))
     group = g.kwargs
-    isempty(group) && return series2D(compute_error(f, t; across=across, select=select, filter=filter, summarize=summarize), ribbon = ribbon)
-
+    if isempty(group)
+        args, kwargs = series2D(compute_error(f, t; across=across, select=select, filter=filter, summarize=summarize), ribbon = ribbon)
+        kwargs[:group] = fill("", length(args[1]))
+        return args, kwargs
+    end
     by = _flatten(group)
     perm = sortpermby(t, by)
     itr = finduniquesorted(rows(t, by), perm)
@@ -53,6 +56,7 @@ function series2D(f, t::IndexedTable, g = Group(); select, across=(), ribbon = f
         end
         plot_kwargs[key] = permutedims(vec(style)[getindex.(Ref(d), col)])
     end
+    get!(plot_kwargs, :color, "black")
     plot_args, plot_kwargs
 end
 

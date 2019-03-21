@@ -4,7 +4,7 @@ struct Analysis{F, NT<:NamedTuple}
 end
 
 Analysis(f; kwargs...) = Analysis(f, values(kwargs))
-Analysis(a::Analysis; kwargs...) = Analysis(a.f, merge(a.kwargs, values(kwargs))) 
+Analysis(a::Analysis; kwargs...) = Analysis(a.f, merge(a.kwargs, values(kwargs)))
 (a::Analysis)(; kwargs...) = Analysis(a; kwargs...)
 (a::Analysis)(args...) = a.f(args...; a.kwargs...)
 
@@ -65,8 +65,9 @@ function compute_axis(f::Analysis{typeof(_density)}, x::AbstractVector)
 end
 
 function _frequency(x; axis)
-    c = countmap(x) 
-    StructVector((axis, [get(c, x, 0) for x in axis]))
+    c = countmap(x)
+    s = sum(values(c))
+    StructVector((axis, [get(c, x, 0)/s for x in axis]))
 end
 
 const frequency = Analysis(_frequency)
