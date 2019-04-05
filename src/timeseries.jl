@@ -1,4 +1,4 @@
-using OnlineStats: fit!, FTSeries, nobs, value
+using OnlineStatsBase: fit!, FTSeries, nobs, value
 using OffsetArrays: OffsetArray
 
 function initstats(series, ranges; dropmissing = true, filter = isfinite, transform = identity)
