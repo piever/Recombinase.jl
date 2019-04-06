@@ -23,9 +23,9 @@ notifications:
 
 ## uncomment the following lines to override the default test script
 # script:
-#   - julia -e 'import Pkg; Pkg.clone(pwd()); Pkg.build("GroupSummaries"); Pkg.pkg"add Lazy#master"; Pkg.test("GroupSummaries"; coverage=true)'
+#   - julia -e 'import Pkg; Pkg.clone(pwd()); Pkg.build("Recombinase"); Pkg.pkg"add Lazy#master"; Pkg.test("Recombinase"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
-  - julia -e 'import Pkg; cd(Pkg.dir("GroupSummaries")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+  - julia -e 'import Pkg; cd(Pkg.dir("Recombinase")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
   # push coverage results to Codecov
-  - julia -e 'import Pkg; cd(Pkg.dir("GroupSummaries")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia -e 'import Pkg; cd(Pkg.dir("Recombinase")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'

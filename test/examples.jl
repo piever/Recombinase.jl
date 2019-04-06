@@ -1,6 +1,6 @@
 using Statistics, StatsBase
-using GroupSummaries: Group, series2D, datafolder
-using GroupSummaries: compute_error, density, frequency, hazard, localregression
+using Recombinase: Group, series2D, datafolder
+using Recombinase: compute_error, density, frequency, hazard, localregression
 using JuliaDB
 
 data = loadtable(joinpath(datafolder, "school.csv"))

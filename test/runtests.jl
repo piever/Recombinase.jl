@@ -1,7 +1,7 @@
 using Statistics, StatsBase
 using StructArrays
-using GroupSummaries
-using GroupSummaries: compute_error, fitvec, aroundindex
+using Recombinase
+using Recombinase: compute_error, fitvec, aroundindex
 using Test
 using IndexedTables
 using OnlineStatsBase
@@ -11,7 +11,7 @@ using OnlineStatsBase
     y = [0.3, 0.1, 0.3, 0.4, 0.2, 0.1]
     across = [1, 1, 1, 2, 2, 2]
     res = compute_error(
-        GroupSummaries.expectedvalue,
+        Recombinase.expectedvalue,
         across,
         x, y,
         summarize = mean
@@ -19,7 +19,7 @@ using OnlineStatsBase
     @test res.first == [1, 2, 3]
     @test columns(res.second, 1) ≈ [0.35, 0.15, 0.2]
     res = compute_error(
-        GroupSummaries.frequency,
+        Recombinase.frequency,
         across,
         x,
         summarize = mean

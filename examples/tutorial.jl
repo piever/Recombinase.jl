@@ -1,6 +1,6 @@
 using Statistics, StatsBase
-using GroupSummaries: Group, series2D, datafolder
-using GroupSummaries: compute_error, density, frequency, hazard, localregression, cumulative, expectedvalue
+using Recombinase: Group, series2D, datafolder
+using Recombinase: compute_error, density, frequency, hazard, localregression, cumulative, expectedvalue
 using JuliaDB, StatsPlots
 
 data = loadtable(joinpath(datafolder, "school.csv"))
@@ -63,7 +63,7 @@ groupedbar(args...; kwargs...)
 
 using Interact, StatsPlots, Blink
 
-using GroupSummaries
-ui = GroupSummaries.gui(data, [plot, scatter, groupedbar]);
+using Recombinase
+ui = Recombinase.gui(data, [plot, scatter, groupedbar]);
 w = Window()
 body!(w, ui)

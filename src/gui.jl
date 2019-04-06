@@ -3,12 +3,12 @@ _vbox(args...) = Widgets.div(args...; style = Dict("display" => "flex", "flex-di
 
 const analysis_options = OrderedDict(
     "" => nothing,
-    "Cumulative" => GroupSummaries.cumulative,
-    "Density" => GroupSummaries.density,
-    "Frequency" => GroupSummaries.frequency,
-    "Hazard" => GroupSummaries.hazard,
-    "Local Regression" => GroupSummaries.localregression,
-    "Expected Value" => GroupSummaries.expectedvalue
+    "Cumulative" => Recombinase.cumulative,
+    "Density" => Recombinase.density,
+    "Frequency" => Recombinase.frequency,
+    "Hazard" => Recombinase.hazard,
+    "Local Regression" => Recombinase.localregression,
+    "Expected Value" => Recombinase.expectedvalue
 )
 
 """
@@ -20,10 +20,10 @@ functions plotters.
 ## Examples
 
 ```julia
-using StatsPlots, GroupSummaries, JuliaDB, Interact
-school = loadtable(joinpath(GroupSummaries.datafolder, "school.csv"))
+using StatsPlots, Recombinase, JuliaDB, Interact
+school = loadtable(joinpath(Recombinase.datafolder, "school.csv"))
 plotters = [plot, scatter, groupedbar]
-GroupSummaries.gui(school, plotters)
+Recombinase.gui(school, plotters)
 ```
 """
 function gui(data, plotters)

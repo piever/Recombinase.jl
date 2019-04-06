@@ -1,4 +1,4 @@
-module GroupSummaries
+module Recombinase
 
 using IterTools
 using Statistics
@@ -18,7 +18,7 @@ include("analysisfunctions.jl")
 include("timeseries.jl")
 include("compute_error.jl")
 include("styles.jl")
-include("groupsummaries.jl")
+include("plots.jl")
 include("gui.jl")
 
 end # module
