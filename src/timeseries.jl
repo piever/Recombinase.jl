@@ -31,21 +31,12 @@ Base.size(t::TrimmedView) = map(length, axes(t))
     ret
 end
 
-trimmedoffset(v, shift) = OffsetArray(v, _padded_tuple((args...) -> 0, v, shift))
-function trimmedoffset(v, shift, range)
-    TrimmedView(trimmedoffset(v, shift), range)
+function aroundindex(v, shift)
+    padded_shift = _padded_tuple((args...) -> 0, v, shift)
+    OffsetArray(v, map(-, padded_shift))
 end
 
-for (offset, view) in zip([:offsetview, :offsetslice], [:view, :getindex])
-    @eval function $offset(v, shift, range = axes(v))
-        shifts = _padded_tuple((args...) -> 0, v, shift)
-        shiftedaxes = ntuple(i -> axes(v, i) .- shifts[i], length(shifts))
-        ranges = _padded_tuple((v, i) -> shiftedaxes[i], v, range)
-        trimmedranges = map(intersect, shiftedaxes, ranges)
-        sub = $view(v, (a .+ b for (a, b) in zip(shifts, trimmedranges))...)
-        OffsetArray(sub, shifts)
-    end
-end
+aroundindex(v, shift, range) = TrimmedView(aroundindex(v, shift), range)
 
 function initstats(series, ranges; filter = isfinitevalue, transform = identity)
     series = to_tuple(series)
