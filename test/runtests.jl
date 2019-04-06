@@ -38,4 +38,9 @@ end
     @test axes(s) == (-5:5,)
     @test s[-3].nobs == 4
     @test s[-3].value isa NamedTuple{(:mean, :variance)}
+    s = fitvec(stats, (aroundindex(trace, t, -3:3) for (trace, t) in zip(traces, ts)), -5:5);
+    @test axes(s) == (-5:5,)
+    @test s[-3].nobs == 4
+    @test s[-3].value isa NamedTuple{(:mean, :variance)}
+    @test s[-4].nobs == 0
 end
