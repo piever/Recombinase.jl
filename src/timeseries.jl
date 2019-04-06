@@ -66,11 +66,11 @@ end
 addname(series, v) = v
 addname(series::NamedTuple{T}, v) where {T} = NamedTuple{T}(v)
 
-function fitvec(series, iter, ranges=nothing; kwargs...)
+function fitvec(series, iter, ranges=(); kwargs...)
     start = iterate(iter)
     start === nothing && error("Nothing to fit!")
     val, state = start
-    init = initstats(series, something(ranges, axes(val)); kwargs...)
+    init = initstats(series, _padded_tuple(axes, val, ranges); kwargs...)
     fitvecmany!(init, Iterators.rest(iter, state))
     StructArray(((nobs = nobs(el), value = addname(series, value(el))) for el in init);
         unwrap = t -> t <: Union{Tuple, NamedTuple})
