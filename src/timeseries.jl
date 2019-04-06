@@ -4,6 +4,49 @@ using OffsetArrays: OffsetArray
 isfinitevalue(::Missing) = false
 isfinitevalue(x::Number) = isfinite(x)
 
+_padded_tuple(default, v::AbstractArray{T, N}, n::NTuple{N, Any}) where {T, N} = n
+_padded_tuple(default, v::AbstractArray{T, N}, n::Any) where {T, N} = _padded_tuple(default, v, (n,))
+_padded_tuple(default, v::AbstractArray{T, N}, n::Tuple) where {T, N} = Tuple(i <= length(n) ? n[i] : default(v, i) for i in 1:N)
+
+struct TrimmedView{T, N, I, V<:AbstractArray}<:AbstractArray{T, N}
+    parent::V
+    trim::I
+    function TrimmedView(v::AbstractArray{T, N}, trim::NTuple{N, AbstractUnitRange}) where {T, N}
+        trimmed = map(intersect, axes(v), trim)
+        new{T, N, typeof(trimmed), typeof(v)}(v, trimmed)
+    end
+end
+function TrimmedView(v::AbstractArray{T, N}, trim) where {T, N}
+    padded_trim::NTuple{N, AbstractUnitRange} = _padded_tuple(axes, v, trim)
+    TrimmedView(v, padded_trim)
+end
+
+Base.parent(t::TrimmedView) = t.parent
+Base.axes(t::TrimmedView) = t.trim
+Base.size(t::TrimmedView) = map(length, axes(t))
+
+@inline Base.@propagate_inbounds function Base.getindex(A::TrimmedView, I...)
+    Base.@boundscheck checkbounds(A, I...)
+    @inbounds ret = parent(A)[I...]
+    ret
+end
+
+trimmedoffset(v, shift) = OffsetArray(v, _padded_tuple((args...) -> 0, v, shift))
+function trimmedoffset(v, shift, range)
+    TrimmedView(trimmedoffset(v, shift), range)
+end
+
+for (offset, view) in zip([:offsetview, :offsetslice], [:view, :getindex])
+    @eval function $offset(v, shift, range = axes(v))
+        shifts = _padded_tuple((args...) -> 0, v, shift)
+        shiftedaxes = ntuple(i -> axes(v, i) .- shifts[i], length(shifts))
+        ranges = _padded_tuple((v, i) -> shiftedaxes[i], v, range)
+        trimmedranges = map(intersect, shiftedaxes, ranges)
+        sub = $view(v, (a .+ b for (a, b) in zip(shifts, trimmedranges))...)
+        OffsetArray(sub, shifts)
+    end
+end
+
 function initstats(series, ranges; filter = isfinitevalue, transform = identity)
     series = to_tuple(series)
     ranges = to_tuple(ranges)
