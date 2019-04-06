@@ -4,7 +4,7 @@ using GroupSummaries
 using GroupSummaries: compute_error, fitvec, aroundindex
 using Test
 using IndexedTables
-using ShiftedArrays, OnlineStatsBase
+using OnlineStatsBase
 
 @testset "discrete" begin
     x = [1, 2, 3, 1, 2, 3]
