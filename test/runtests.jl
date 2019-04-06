@@ -1,10 +1,10 @@
 using Statistics, StatsBase
 using StructArrays
 using GroupSummaries
-using GroupSummaries: compute_error
+using GroupSummaries: compute_error, fitvec, aroundindex
 using Test
 using IndexedTables
-using ShiftedArrays, OnlineStatsBase
+using OnlineStatsBase
 
 @testset "discrete" begin
     x = [1, 2, 3, 1, 2, 3]
@@ -34,8 +34,13 @@ end
     traces = [v1, v1, v1, v2, v2, v2]
     ts = [10, 501, 733, 1, 20, 30]
     stats = (mean = Mean, variance = Variance)
-    s = GroupSummaries.fitvec(stats, (lead(trace, t) for (trace, t) in zip(traces, ts)), -5:5);
+    s = fitvec(stats, (aroundindex(trace, t) for (trace, t) in zip(traces, ts)), -5:5);
     @test axes(s) == (-5:5,)
     @test s[-3].nobs == 4
     @test s[-3].value isa NamedTuple{(:mean, :variance)}
+    s = fitvec(stats, (aroundindex(trace, t, -3:3) for (trace, t) in zip(traces, ts)), -5:5);
+    @test axes(s) == (-5:5,)
+    @test s[-3].nobs == 4
+    @test s[-3].value isa NamedTuple{(:mean, :variance)}
+    @test s[-4].nobs == 0
 end
