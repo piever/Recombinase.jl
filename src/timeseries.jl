@@ -47,18 +47,18 @@ function initstats(series, ranges; filter = isfinitevalue, transform = identity)
     return OffsetArray(vec, ranges)
 end
 
-function fitvec!(m, val)
-    for i in eachindex(m)
-        if checkbounds(Bool, val, i)
-            @inbounds fit!(m[i], val[i])
-        end
+function fitvec!(m, val, shared_indices = eachindex(m, val))
+    for cart in shared_indices
+        @inbounds fit!(m[cart], val[cart])
     end
     return m
 end
 
 function fitvecmany!(m, iter)
     for el in iter
-        fitvec!(m, el)
+        am, ael = axes(m), axes(el)
+        shared = (am == ael) ? eachindex(m, el) : CartesianIndices(map(intersect, am, ael))
+        fitvec!(m, el, shared)
     end
     return m
 end
