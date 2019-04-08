@@ -1,7 +1,6 @@
-using Statistics, StatsBase
+using Statistics, StatsBase, StatsPlots, JuliaDB
 using Recombinase: Group, series2D, datafolder
-using Recombinase: compute_error, density, frequency, hazard, localregression, cumulative, expectedvalue
-using JuliaDB, StatsPlots
+using Recombinase: compute_error, discrete, density, hazard, cumulative, prediction
 
 data = loadtable(joinpath(datafolder, "school.csv"))
 
@@ -25,19 +24,47 @@ args, kwargs = series2D(
     Group(:Sx),
     across = :School,
     select = (:MAch, :SSS),
-    summarize = mean
+    summarize = median
     )
 scatter(args...; kwargs...)
 
 args, kwargs = series2D(
+    data,
+    Group(color = :Sx, markershape = :Sector),
+    across = :School,
+    select = (:MAch, :SSS),
+    summarize = median
+    )
+scatter(args...; kwargs...)
+
+args, kwargs = series2D(
+    data,
+    Group(:Sx),
+    across = :School,
+    select = (:MAch, :SSS),
+    summarize = median,
+    color = [:red, :blue]
+    )
+scatter(args...; kwargs...)
+
+args, kwargs = series2D(
+    data,
+    Group(:Sx),
+    across = :School,
+    select = (:MAch, :SSS),
+    summarize = median,
+    )
+scatter(args...; legend = :topleft, markersize = 10, kwargs...)
+
+args, kwargs = series2D(
     cumulative,
     data,
-    Group((:Sx, :Sector)),
+    Group(:Sx),
     across = :School,
     select = :MAch,
     ribbon = true
    )
-plot(args...; kwargs..., legend = :bottomright)
+plot(args...; kwargs..., legend = :topleft)
 
 args, kwargs = series2D(
     density(bandwidth = 1),
@@ -47,7 +74,7 @@ args, kwargs = series2D(
     select = :MAch,
     ribbon = true
    )
-plot(args...; kwargs...)
+plot(args...; kwargs..., legend = :bottom)
 
 args, kwargs = series2D(
     expectedvalue,

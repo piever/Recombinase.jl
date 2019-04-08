@@ -7,7 +7,7 @@ using Loess: loess, predict
 using KernelDensity: pdf, kde
 using StructArrays: StructVector, StructArray, finduniquesorted, uniquesorted, fieldarrays
 using IndexedTables: collect_columns, collect_columns_flattened, rows, columns, sortpermby, IndexedTable, colnames
-import ColorBrewer
+using ColorTypes: RGB
 import Widgets, Observables
 using Widgets: Widget, dropdown, toggle, button
 using OrderedCollections: OrderedDict

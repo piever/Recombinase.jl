@@ -4,7 +4,7 @@ _vbox(args...) = Widgets.div(args...; style = Dict("display" => "flex", "flex-di
 const analysis_options = OrderedDict(
     "" => nothing,
     "Cumulative" => Recombinase.cumulative,
-    "Distribution" => Recombinase.distribution,
+    "Density" => Recombinase.density,
     "Hazard" => Recombinase.hazard,
     "Prediction" => Recombinase.prediction,
 )

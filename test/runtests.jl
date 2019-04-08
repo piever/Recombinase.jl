@@ -2,7 +2,7 @@ using Statistics, StatsBase
 using StructArrays
 using Recombinase
 using Recombinase: compute_error, fitvec, aroundindex, discrete,
-    prediction, distribution
+    prediction, density
 using Test
 using IndexedTables
 using OnlineStatsBase
@@ -20,7 +20,7 @@ using OnlineStatsBase
     @test res.first == [1, 2, 3]
     @test columns(res.second, 1) ≈ [0.35, 0.15, 0.2]
     res = compute_error(
-        discrete(distribution),
+        discrete(density),
         across,
         x,
         summarize = mean
