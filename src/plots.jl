@@ -39,7 +39,7 @@ series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwar
 
 function series2D(f, t′::IndexedTable, g = Group(); select, across = observations, ribbon = false, filter = isfinite, summarize = nothing, kwargs...)
 
-    no_error = isnothing(f) ? across == () : across === observations
+    no_error = isnothing(f) ? across === observations : across == ()
     summarize = something(summarize, no_error ? mean : (mean, sem))
     across == () && (across = fill(0, length(t′)))
     across === observations && (across = 1:length(t′))
