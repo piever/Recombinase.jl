@@ -59,12 +59,12 @@ scatter(args...; legend = :topleft, markersize = 10, kwargs...)
 args, kwargs = series2D(
     cumulative,
     data,
-    Group((:Sx, :Sector)),
+    Group(:Sx),
     across = :School,
     select = :MAch,
     ribbon = true
    )
-plot(args...; kwargs..., legend = :bottomright)
+plot(args...; kwargs..., legend = :topleft)
 
 args, kwargs = series2D(
     density(bandwidth = 1),
@@ -74,7 +74,7 @@ args, kwargs = series2D(
     select = :MAch,
     ribbon = true
    )
-plot(args...; kwargs...)
+plot(args...; kwargs..., legend = :bottom)
 
 args, kwargs = series2D(
     expectedvalue,

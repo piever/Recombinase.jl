@@ -102,4 +102,38 @@ scatter(args...; legend = :topleft, markersize = 10, kwargs...)
 ```
 ![styleplot](https://user-images.githubusercontent.com/6333339/55731961-feaa5e00-5a12-11e9-8d9d-2ba82a008811.png)
 
+### Computing summaries
+
+It is also possible to get average value and variability of a given analysis (density, cumulative, hazard rate and local regression are supported so far, but one can also add their own function) across groups.
+
+For example (here we use `ribbon` to signal we want a shaded ribbon to denote the error estimate):
+
+```julia
+args, kwargs = series2D(
+    cumulative,
+    data,
+    Group(:Sx),
+    across = :School,
+    select = :MAch,
+    ribbon = true
+   )
+plot(args...; kwargs..., legend = :topleft)
+```
+![cumulative](https://user-images.githubusercontent.com/6333339/55733126-2c90a200-5a15-11e9-9fb0-168d247639d3.png)
+
+Note that extra keyword arguments can be passed to the analysis:
+
+```julia
+args, kwargs = series2D(
+    density(bandwidth = 1),
+    data,
+    Group(color=:Sx, linestyle=:Sector),
+    across = :School,
+    select = :MAch,
+    ribbon = true
+   )
+plot(args...; kwargs..., legend = :bottom)
+```
+![density](https://user-images.githubusercontent.com/6333339/55733209-56e25f80-5a15-11e9-909b-c24da810e73e.png)
+
 
