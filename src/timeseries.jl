@@ -1,9 +1,6 @@
 using OnlineStatsBase: fit!, FTSeries, nobs, value
 using OffsetArrays: OffsetArray
 
-isfinitevalue(::Missing) = false
-isfinitevalue(x::Number) = isfinite(x)
-
 _padded_tuple(default, v::AbstractArray{T, N}, n::NTuple{N, Any}) where {T, N} = n
 _padded_tuple(default, v::AbstractArray{T, N}, n::Any) where {T, N} = _padded_tuple(default, v, (n,))
 _padded_tuple(default, v::AbstractArray{T, N}, n::Tuple) where {T, N} = Tuple(i <= length(n) ? n[i] : default(v, i) for i in 1:N)
@@ -38,6 +35,9 @@ end
 
 aroundindex(v, shift, range) = TrimmedView(aroundindex(v, shift), range)
 
+isfinitevalue(::Missing) = false
+isfinitevalue(x::Number) = isfinite(x)
+
 function initstats(series, ranges; filter = isfinitevalue, transform = identity)
     series = to_tuple(series)
     ranges = to_tuple(ranges)
@@ -63,8 +63,9 @@ function fitvecmany!(m, iter)
     return m
 end
 
-addname(series, v) = v
+addname(series::Tuple, v) = v
 addname(series::NamedTuple{T}, v) where {T} = NamedTuple{T}(v)
+addname(series::Any, v) = first(v)
 
 function fitvec(series, iter, ranges=(); kwargs...)
     start = iterate(iter)
