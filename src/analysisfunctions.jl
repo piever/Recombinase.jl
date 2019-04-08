@@ -7,7 +7,7 @@ end
 
 Analysis{S}(f; kwargs...) where {S} = Analysis{S}(f, values(kwargs))
 Analysis{S}(a::Analysis; kwargs...) where {S} = Analysis{S}(a.f, merge(a.kwargs, values(kwargs)))
-Analysis(args...; kwargs...) = Analysis{:continuous}(args...; kwargs...)
+Analysis(args...; kwargs...) = Analysis{:auto}(args...; kwargs...)
 
 getfunction(funcs, S) = funcs
 getfunction(funcs::NamedTuple, S::Symbol) = getfield(funcs, S)
@@ -17,6 +17,9 @@ getfunction(funcs::NamedTuple, S::Symbol) = getfield(funcs, S)
 
 axis_style(::Analysis{S}) where {S} = S
 discrete(a::Analysis) = Analysis{:discrete}(a.f, a.kwargs)
+continuous(a::Analysis) = Analysis{:continuous}(a.f, a.kwargs)
+discrete(::Nothing) = nothing
+continuous(::Nothing) = nothing
 
 Base.get(a::Analysis, s::Symbol, def) = get(a.kwargs, s, def)
 Base.get(f::Function, a::Analysis, s::Symbol) = get(f, a.kwargs, s)
@@ -31,7 +34,15 @@ const FunctionOrAnalysis = Union{Function, Analysis}
 # TODO compute axis if called standalone!
 compute_axis(f::Function, args...) = compute_axis(Analysis(f), args...)
 
+infer_axis(x::Number, args...) = Analysis{:continuous}
+infer_axis(x, args...) = Analysis{:discrete}
+
 function compute_axis(a::Analysis, args...)
+    a_inf = infer_axis(args...)(a.f, a.kwargs)
+    compute_axis(a_inf, args...)
+end
+
+function compute_axis(a::Analysis{:continuous}, args...)
     x = args[1]
     set(a, :axis) do
         npoints = get(a, :npoints, 100)

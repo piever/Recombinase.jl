@@ -136,11 +136,11 @@ plot(args...; kwargs..., legend = :bottom)
 ```
 ![density](https://user-images.githubusercontent.com/6333339/55733209-56e25f80-5a15-11e9-909b-c24da810e73e.png)
 
-`discrete` transforms a continuous analysis (they all are continuous by default) into the discrete equivalent:
+If we do not specify `across`, it defaults to `across = 1:length(t)`.
 
 ```julia
 args, kwargs = series2D(
-    discrete(prediction),
+    prediction,
     data,
     Group(color = :Minrty),
     select = (:Sx, :MAch),
@@ -150,4 +150,20 @@ groupedbar(args...; kwargs...)
 ```
 ![barplot](https://user-images.githubusercontent.com/6333339/55737555-4635e780-5a1d-11e9-90a1-ab8c6efd12c3.png)
 
-Note that here we didn't specify `across`, so it defaulted to `across = 1:length(t)`. This is useful to compute bar plots with error bars across observations, but makes less sense for other analyses (for example, for continuous analysis, it generally does not make sense). To instead clump all observations together, you can use `across = ()`.
+This is useful to compute bar plots with error bars across observations, but makes less sense for other analyses (for example, for continuous analysis, it generally does not make sense). To instead clump all observations together, you can use `across = ()`.
+
+### Axis style selection
+
+Analysis try to infer the axis type (continuous if the variable is numeric, categorical otherwise). If that is not appropriate for your data you can use `discrete(prediction)` or `continuous(prediction)` (works for `hazard`, `density` and `cumulative` as well).
+
+### Interactive plotting
+
+Most of the above analysis can be selected from a simple [Interact](http://juliagizmos.github.io/Interact.jl/latest/)-based UI. To launch the UI simply do:
+
+```julia
+using Recombinase, Interact, StatsPlots, Blink
+# here we give the functions we want to use for plotting
+ui = Recombinase.gui(data, [plot, scatter, groupedbar]);
+w = Window()
+body!(w, ui)
+```

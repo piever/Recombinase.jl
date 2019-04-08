@@ -77,7 +77,7 @@ args, kwargs = series2D(
 plot(args...; kwargs..., legend = :bottom)
 
 args, kwargs = series2D(
-    discrete(prediction),
+    prediction,
     data,
     Group(color = :Minrty),
     select = (:Sx, :MAch),
