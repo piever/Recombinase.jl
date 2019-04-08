@@ -77,12 +77,11 @@ args, kwargs = series2D(
 plot(args...; kwargs..., legend = :bottom)
 
 args, kwargs = series2D(
-    expectedvalue,
+    discrete(prediction),
     data,
     Group(color = :Minrty),
     select = (:Sx, :MAch),
     summarize = (mean, sem),
-    across = 1:length(data)
 )
 groupedbar(args...; kwargs...)
 

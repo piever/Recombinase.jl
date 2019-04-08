@@ -136,4 +136,18 @@ plot(args...; kwargs..., legend = :bottom)
 ```
 ![density](https://user-images.githubusercontent.com/6333339/55733209-56e25f80-5a15-11e9-909b-c24da810e73e.png)
 
+`discrete` transforms a continuous analysis (they all are continuous by default) into the discrete equivalent:
 
+```julia
+args, kwargs = series2D(
+    discrete(prediction),
+    data,
+    Group(color = :Minrty),
+    select = (:Sx, :MAch),
+    summarize = (mean, sem),
+)
+groupedbar(args...; kwargs...)
+```
+![barplot](https://user-images.githubusercontent.com/6333339/55737555-4635e780-5a1d-11e9-90a1-ab8c6efd12c3.png)
+
+Note that here we didn't specify `across`, so it defaulted to `across = 1:length(t)`. This is useful to compute bar plots with error bars across observations, but makes less sense for other analyses (for example, for continuous analysis, it generally does not make sense). To instead clump all observations together, you can use `across = ()`.

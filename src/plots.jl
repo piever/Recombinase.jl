@@ -13,6 +13,9 @@ to_string(t::Tuple) = join(t, ", ")
 to_string(t::Any) = string(t)
 to_string(nt::NamedTuple) = join(("$a = $b" for (a, b) in pairs(nt)), ", ")
 
+struct Observations; end
+const observations = Observations()
+
 function series2D(s::StructVector{<:Pair}; ribbon = false)
     cols = fieldarrays(s.second)
     kwargs = Dict{Symbol, Any}()
@@ -33,10 +36,24 @@ end
 
 series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
-function series2D(f, t::IndexedTable, g = Group(); select, across=(), ribbon = false, filter = isfinite, summarize = nothing, kwargs...)
+function series2D(f, t′::IndexedTable, g = Group(); select, across = observations, ribbon = false, filter = isfinite, summarize = nothing, kwargs...)
 
-    summarize = something(summarize, (across == ()) ? mean : (mean, sem))
-    across == () && (across = isnothing(f) ? (1:length(t)) : fill(nothing, length(t)))
+    has_error = isnothing(f) ? across == () : across === observations
+    summarize = something(summarize, has_error ? (mean, sem) : mean)
+    across == () && (across = fill(0, length(t′)))
+    across === observations && (across = 1:length(t′))
+    if across isa AbstractVector
+        counter = 0
+        sym =:across
+        while sym in colnames(t′)
+            counter += 1
+            sym = Symbol("$across_$counter")
+        end
+        t = pushcol(t′, sym => across)
+        across = sym
+    else
+        t = t′
+    end
     group = g.kwargs
     if isempty(group)
         args, kwargs = series2D(compute_error(f, t; across=across, select=select, filter=filter, summarize=summarize), ribbon = ribbon)
@@ -46,7 +63,7 @@ function series2D(f, t::IndexedTable, g = Group(); select, across=(), ribbon = f
     by = _flatten(group)
     perm = sortpermby(t, by)
     itr = finduniquesorted(rows(t, by), perm)
-    data = collect_columns_flattened(key => compute_error(f, t[idxs]; across=_slice(across, idxs), select=select,  filter=filter, summarize=summarize) for (key, idxs) in itr)
+    data = collect_columns_flattened(key => compute_error(f, t[idxs]; across=across, select=select,  filter=filter, summarize=summarize) for (key, idxs) in itr)
     plot_args, plot_kwargs = series2D(data.second; ribbon = ribbon)
     plot_kwargs[:group] = columns(data.first)
     grpd = collect_columns(key for (key, _) in itr)
@@ -63,9 +80,6 @@ function series2D(f, t::IndexedTable, g = Group(); select, across=(), ribbon = f
     get!(plot_kwargs, :color, "black")
     plot_args, plot_kwargs
 end
-
-_slice(t::AbstractVector, idxs) = t[idxs]
-_slice(t, idxs) = t
 
 _flatten(t) = IterTools.imap(to_tuple, t) |>
     Iterators.flatten |>
