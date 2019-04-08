@@ -15,7 +15,6 @@ getfunction(funcs::NamedTuple, S::Symbol) = getfield(funcs, S)
 (a::Analysis{S})(; kwargs...) where {S} = Analysis{S}(a; kwargs...)
 (a::Analysis{S})(args...) where {S} = getfunction(a.f, S)(args...; a.kwargs...)
 
-axis_style(::Analysis{S}) where {S} = S
 discrete(a::Analysis) = Analysis{:discrete}(a.f, a.kwargs)
 continuous(a::Analysis) = Analysis{:continuous}(a.f, a.kwargs)
 discrete(::Nothing) = nothing
@@ -34,7 +33,7 @@ const FunctionOrAnalysis = Union{Function, Analysis}
 # TODO compute axis if called standalone!
 compute_axis(f::Function, args...) = compute_axis(Analysis(f), args...)
 
-infer_axis(x::Number, args...) = Analysis{:continuous}
+infer_axis(x::AbstractVector{T}, args...) where {T<:Union{Missing, Number}} = Analysis{:continuous}
 infer_axis(x, args...) = Analysis{:discrete}
 
 function compute_axis(a::Analysis, args...)

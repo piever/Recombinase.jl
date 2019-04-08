@@ -167,3 +167,4 @@ ui = Recombinase.gui(data, [plot, scatter, groupedbar]);
 w = Window()
 body!(w, ui)
 ```
+![gui](https://user-images.githubusercontent.com/6333339/55742817-8fd7ff80-5a28-11e9-882f-4f8847ab365e.png)

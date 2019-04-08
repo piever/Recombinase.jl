@@ -15,6 +15,7 @@ to_string(nt::NamedTuple) = join(("$a = $b" for (a, b) in pairs(nt)), ", ")
 
 struct Observations; end
 const observations = Observations()
+Base.string(::Observations) = "observations"
 
 function series2D(s::StructVector{<:Pair}; ribbon = false)
     cols = fieldarrays(s.second)
@@ -38,8 +39,8 @@ series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwar
 
 function series2D(f, t′::IndexedTable, g = Group(); select, across = observations, ribbon = false, filter = isfinite, summarize = nothing, kwargs...)
 
-    has_error = isnothing(f) ? across == () : across === observations
-    summarize = something(summarize, has_error ? (mean, sem) : mean)
+    no_error = isnothing(f) ? across == () : across === observations
+    summarize = something(summarize, no_error ? mean : (mean, sem))
     across == () && (across = fill(0, length(t′)))
     across === observations && (across = 1:length(t′))
     if across isa AbstractVector
