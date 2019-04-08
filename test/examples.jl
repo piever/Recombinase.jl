@@ -1,6 +1,6 @@
 using Statistics, StatsBase
 using Recombinase: Group, series2D, datafolder
-using Recombinase: compute_error, discrete, distribution, hazard, prediction
+using Recombinase: compute_error, discrete, density, hazard, prediction
 using JuliaDB
 
 data = loadtable(joinpath(datafolder, "school.csv"))
@@ -8,9 +8,9 @@ t = columns(data)
 
 res = compute_error(t.School, t.SSS, t.CSES, summarize=(median, std))
 
-compute_error(distribution, t.School, t.MAch)
+compute_error(density, t.School, t.MAch)
 
-compute_error(discrete(distribution), t.School, rand(1:100, length(t.School)))
+compute_error(discrete(density), t.School, rand(1:100, length(t.School)))
 
 compute_error(hazard, t.School, t.MAch)
 

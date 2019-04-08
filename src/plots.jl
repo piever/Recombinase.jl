@@ -9,6 +9,10 @@ end
 
 Group(s) = Group(color = s)
 
+to_string(t::Tuple) = join(t, ", ")
+to_string(t::Any) = string(t)
+to_string(nt::NamedTuple) = join(("$a = $b" for (a, b) in pairs(nt)), ", ")
+
 function series2D(s::StructVector{<:Pair}; ribbon = false)
     cols = fieldarrays(s.second)
     kwargs = Dict{Symbol, Any}()
@@ -44,7 +48,7 @@ function series2D(f, t::IndexedTable, g = Group(); select, across=(), ribbon = f
     itr = finduniquesorted(rows(t, by), perm)
     data = collect_columns_flattened(key => compute_error(f, t[idxs]; across=_slice(across, idxs), select=select,  filter=filter, summarize=summarize) for (key, idxs) in itr)
     plot_args, plot_kwargs = series2D(data.second; ribbon = ribbon)
-    plot_kwargs[:group] = data.first
+    plot_kwargs[:group] = columns(data.first)
     grpd = collect_columns(key for (key, _) in itr)
     style_kwargs = Dict(kwargs)
     for (key, val) in pairs(group)

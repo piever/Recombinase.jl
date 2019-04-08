@@ -75,7 +75,7 @@ function _frequency(x; axis)
     StructVector((axis, [get(c, x, 0)/s for x in axis]))
 end
 
-const distribution = Analysis((continuous = _density, discrete = _frequency))
+const density = Analysis((continuous = _density, discrete = _frequency))
 
 function _cumulative(x; axis, kwargs...)
     data = ecdf(x)(axis)
@@ -84,9 +84,9 @@ end
 
 const cumulative = Analysis(_cumulative)
 
-const hazardfunctions = map(distribution.f) do density
+const hazardfunctions = map(density.f) do _density
     function (t; axis, kwargs...)
-        pdf = density(t; axis = axis, kwargs...)
+        pdf = _density(t; axis = axis, kwargs...)
         cdf = _cumulative(t; axis = axis)
         pdfs = tupleofarrays(pdf)[2]
         cdfs = tupleofarrays(cdf)[2]
