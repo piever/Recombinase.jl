@@ -43,4 +43,10 @@ end
     @test s[-3].nobs == 4
     @test s[-3].value isa NamedTuple{(:mean, :variance)}
     @test s[-4].nobs == 0
+
+    stats = Mean
+    s = fitvec(stats, (aroundindex(trace, t) for (trace, t) in zip(traces, ts)), -5:5);
+    @test axes(s) == (-5:5,)
+    @test s[-3].nobs == 4
+    @test s[-3].value isa Float64
 end
