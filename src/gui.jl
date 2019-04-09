@@ -35,7 +35,7 @@ function gui(data, plotters)
     yaxis = dropdown(maybens,label = "Y")
     an_opt = dropdown(analysis_options, label = "Analysis")
     axis_type = dropdown([:auto, :continuous, :discrete], label = "Axis type")
-    across = dropdown(Observables.@map(vcat(observations, (), &ns)), label="Across")
+    error = dropdown(Observables.@map(vcat(observations, (), &ns)), label="Error")
     styles = collect(keys(style_dict))
     sort!(styles)
     splitters = [dropdown(maybens, label = string(style)) for style in styles]
@@ -51,7 +51,7 @@ function gui(data, plotters)
         an = an_opt[]
         an_inf = isnothing(an) ? nothing : Analysis{axis_type[]}(an)
         args, kwargs = series2D(an_inf, &data, Group(; grps...);
-            select = select, across = across[], ribbon = ribbon[])
+            select = select, error = error[], ribbon = ribbon[])
         plotter[](args...; kwargs..., string2kwargs(plot_kwargs[])...)
     end
     ui = Widget(
@@ -60,7 +60,7 @@ function gui(data, plotters)
             :yaxis => yaxis,
             :analysis => an_opt,
             :axis_type => axis_type,
-            :across => across,
+            :error => error,
             :plotter => plotter,
             :plot_button => btn,
             :plot_kwargs => plot_kwargs,
@@ -75,7 +75,7 @@ function gui(data, plotters)
                                           :yaxis,
                                           :analysis,
                                           :axis_type,
-                                          :across,
+                                          :error,
                                           :plotter
                                          ),
                                     :ribbon,

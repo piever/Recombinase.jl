@@ -22,7 +22,7 @@ args, kwargs = series2D(
     prediction,
     data,
     Group((:Sx, :Sector)),
-    across = :School,
+    error = :School,
     select = (:MAch, :SSS),
     ribbon = true
 )
@@ -34,7 +34,7 @@ args, kwargs = series2D(
     Group(color = :Sx, linestyle = :Sector),
     color = [:red, :black],
     select = (:MAch, :SSS),
-    across = :School,
+    error = :School,
     ribbon = true
 )
 plot(args...; kwargs...)
@@ -42,7 +42,7 @@ plot(args...; kwargs...)
 args, kwargs = series2D(
     data,
     Group(color = :Sx, color = :Sx),
-    across = :School,
+    error = :School,
     select = (:MAch, :SSS),
 )
 scatter(args...; kwargs...)

@@ -9,7 +9,7 @@ First, let us load the relevant packages and an example dataset:
 ```julia
 using Statistics, StatsBase, StatsPlots, JuliaDB
 using Recombinase: Group, series2D, datafolder
-using Recombinase: compute_error, discrete, distribution, hazard, cumulative, prediction
+using Recombinase: compute_error, discrete, density, hazard, cumulative, prediction
 
 data = loadtable(joinpath(datafolder, "school.csv"))
 ```
@@ -28,13 +28,13 @@ scatter(args...; kwargs...)
 ```
 ![crowded](https://user-images.githubusercontent.com/6333339/55731327-ef76e080-5a11-11e9-9270-0da5328bef42.png)
 
-This creates an overcrowded plot: we could instead compute the average value of our columns of interest for each school and then plot just one point per school:
+This creates an overcrowded plot. We could instead compute the average value of our columns of interest for each school and then plot just one point per school (with error bars representing variability within the school):
 
 ```julia
 args, kwargs = series2D(
     data,
     Group(:Sx),
-    across = :School,
+    error = :School,
     select = (:MAch, :SSS),
     )
 scatter(args...; kwargs...)
@@ -47,7 +47,7 @@ The default is to compute mean and standard error of the mean for error bars. An
 args, kwargs = series2D(
     data,
     Group(:Sx),
-    across = :School,
+    error = :School,
     select = (:MAch, :SSS),
     summarize = median
     )
@@ -63,7 +63,7 @@ We can use different attributes to split the data as follows:
 args, kwargs = series2D(
     data,
     Group(color = :Sx, markershape = :Sector),
-    across = :School,
+    error = :School,
     select = (:MAch, :SSS),
     summarize = median
     )
@@ -79,7 +79,7 @@ There are two ways in which we can style the plot: first, we can pass a custom s
 args, kwargs = series2D(
     data,
     Group(:Sx),
-    across = :School,
+    error = :School,
     select = (:MAch, :SSS),
     summarize = median,
     color = [:red, :blue]
@@ -94,7 +94,7 @@ Second, we can style plat attributes as we would normally do:
 args, kwargs = series2D(
     data,
     Group(:Sx),
-    across = :School,
+    error = :School,
     select = (:MAch, :SSS),
     summarize = median,
     )
@@ -113,7 +113,7 @@ args, kwargs = series2D(
     cumulative,
     data,
     Group(:Sx),
-    across = :School,
+    error = :School,
     select = :MAch,
     ribbon = true
    )
@@ -128,7 +128,7 @@ args, kwargs = series2D(
     density(bandwidth = 1),
     data,
     Group(color=:Sx, linestyle=:Sector),
-    across = :School,
+    error = :School,
     select = :MAch,
     ribbon = true
    )
@@ -136,7 +136,7 @@ plot(args...; kwargs..., legend = :bottom)
 ```
 ![density](https://user-images.githubusercontent.com/6333339/55733209-56e25f80-5a15-11e9-909b-c24da810e73e.png)
 
-If we do not specify `across`, it defaults to `across = 1:length(t)`.
+If we do not specify `error`, it defaults to `error = observations` (so we would compute the `sem` across observations).
 
 ```julia
 args, kwargs = series2D(
@@ -144,13 +144,12 @@ args, kwargs = series2D(
     data,
     Group(color = :Minrty),
     select = (:Sx, :MAch),
-    summarize = (mean, sem),
 )
 groupedbar(args...; kwargs...)
 ```
 ![barplot](https://user-images.githubusercontent.com/6333339/55737555-4635e780-5a1d-11e9-90a1-ab8c6efd12c3.png)
 
-This is useful to compute bar plots with error bars across observations, but makes less sense for other analyses (for example, for continuous analysis, it generally does not make sense). To instead clump all observations together, you can use `across = ()`.
+This is useful to compute bar plots with error bars across observations, but makes less sense for other analyses (for example, for continuous analysis, it generally does not make sense). To instead clump all observations together, you can use `error = ()`.
 
 ### Axis style selection
 
@@ -167,4 +166,4 @@ ui = Recombinase.gui(data, [plot, scatter, groupedbar]);
 w = Window()
 body!(w, ui)
 ```
-![gui](https://user-images.githubusercontent.com/6333339/55742817-8fd7ff80-5a28-11e9-882f-4f8847ab365e.png)
+![interactgui](https://user-images.githubusercontent.com/6333339/55816219-b3af4a00-5ae9-11e9-94f5-d3cc4e5d722d.png)
