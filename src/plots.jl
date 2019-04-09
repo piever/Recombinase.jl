@@ -16,6 +16,10 @@ to_string(nt::NamedTuple) = join(("$a = $b" for (a, b) in pairs(nt)), ", ")
 struct Observations; end
 const observations = Observations()
 Base.string(::Observations) = "observations"
+function sortpermby(t::IndexedTable, ::Observations; return_keys = false)
+    perm = Base.OneTo(length(t))
+    return return_keys ? (perm, perm) : perm
+end
 
 function series2D(s::StructVector{<:Pair}; ribbon = false)
     cols = fieldarrays(s.second)
@@ -37,34 +41,33 @@ end
 
 series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
-function series2D(f, t′::IndexedTable, g = Group(); select, across = observations, ribbon = false, filter = isfinite, summarize = nothing, kwargs...)
+function series2D(f, t′::IndexedTable, g = Group(); select, error = observations, ribbon = false, filter = isfinite, summarize = nothing, kwargs...)
 
-    no_error = isnothing(f) ? across === observations : across == ()
+    no_error = isnothing(f) ? error === observations : error == ()
     summarize = something(summarize, no_error ? mean : (mean, sem))
-    across == () && (across = fill(0, length(t′)))
-    across === observations && (across = 1:length(t′))
-    if across isa AbstractVector
+    error == () && (error = fill(0, length(t′)))
+    if error isa AbstractVector
         counter = 0
-        sym =:across
+        sym =:error
         while sym in colnames(t′)
             counter += 1
-            sym = Symbol("$across_$counter")
+            sym = Symbol("$error_$counter")
         end
-        t = pushcol(t′, sym => across)
-        across = sym
+        t = pushcol(t′, sym => error)
+        error = sym
     else
         t = t′
     end
     group = g.kwargs
     if isempty(group)
-        args, kwargs = series2D(compute_error(f, t; across=across, select=select, filter=filter, summarize=summarize), ribbon = ribbon)
+        args, kwargs = series2D(compute_error(f, t, error, select=select, filter=filter, summarize=summarize), ribbon = ribbon)
         kwargs[:group] = fill("", length(args[1]))
         return args, kwargs
     end
     by = _flatten(group)
     perm = sortpermby(t, by)
     itr = finduniquesorted(rows(t, by), perm)
-    data = collect_columns_flattened(key => compute_error(f, t[idxs]; across=across, select=select,  filter=filter, summarize=summarize) for (key, idxs) in itr)
+    data = collect_columns_flattened(key => compute_error(f, t[idxs], error, select=select,  filter=filter, summarize=summarize) for (key, idxs) in itr)
     plot_args, plot_kwargs = series2D(data.second; ribbon = ribbon)
     plot_kwargs[:group] = columns(data.first)
     grpd = collect_columns(key for (key, _) in itr)
