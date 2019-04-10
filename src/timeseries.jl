@@ -63,16 +63,19 @@ function fitvecmany!(m, iter)
     return m
 end
 
-addname(series::Tuple, v) = v
-addname(series::NamedTuple{T}, v) where {T} = NamedTuple{T}(v)
-addname(series::Any, v) = first(v)
+to_namedtuple(s::NamedTuple) = s
+to_namedtuple(s) = to_namedtuple((s,))
+to_namedtuple(s::Tuple) = NamedTuple{map(Symbol, s)}(s)
 
-function fitvec(series, iter, ranges=(); kwargs...)
+fitvec(series, iter, ranges=(); kwargs...) = fitvec(to_namedtuple(series), iter, ranges; kwargs...)
+
+function fitvec(series::NamedTuple{T}, iter, ranges=(); kwargs...) where T
     start = iterate(iter)
     start === nothing && error("Nothing to fit!")
     val, state = start
     init = initstats(series, _padded_tuple(axes, val, ranges); kwargs...)
     fitvecmany!(init, Iterators.rest(iter, state))
-    StructArray(((nobs = nobs(el), value = addname(series, value(el))) for el in init);
+    s = StructArray(((nobs = nobs(el), value = NamedTuple{T}(value(el))) for el in init);
         unwrap = t -> t <: Union{Tuple, NamedTuple})
+    StructArray(merge((nobs = s.nobs,), fieldarrays(s.value)))
 end
