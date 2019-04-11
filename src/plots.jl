@@ -79,10 +79,20 @@ function series2D(f, t′::IndexedTable, g = Group(); select, error = observatio
         style = get(style_kwargs, key) do
             style_dict[key]
         end
-        plot_kwargs[key] = permutedims(vec(style)[getindex.(Ref(d), col)])
+        plot_kwargs[key] = permutedims(access_style(style, getindex.(Ref(d), col)))
     end
     get!(plot_kwargs, :color, "black")
     plot_args, plot_kwargs
+end
+
+function access_style(st, n::AbstractArray)
+    [access_style(st, i) for i in n]
+end
+
+function access_style(st, n::Integer)
+    v = vec(st)
+    m = ((n-1) % length(v))+1
+    v[m]
 end
 
 _flatten(t) = IterTools.imap(to_tuple, t) |>

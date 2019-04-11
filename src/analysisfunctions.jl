@@ -34,6 +34,8 @@ const FunctionOrAnalysis = Union{Function, Analysis}
 compute_axis(f::Function, args...) = compute_axis(Analysis(f), args...)
 
 infer_axis(x::AbstractVector{T}, args...) where {T<:Union{Missing, Number}} = Analysis{:continuous}
+infer_axis(x::AbstractVector{T}, args...) where {T<:Union{Missing, AbstractArray}} = Analysis{:vectorial}
+infer_axis(x::AbstractVector{Missing}, args...) = error("All data is missing")
 infer_axis(x, args...) = Analysis{:discrete}
 
 function compute_axis(a::Analysis, args...)
@@ -56,6 +58,13 @@ function compute_axis(a::Analysis{:discrete}, args...)
     end
 end
 
+function compute_axis(a::Analysis{:vectorial}, args...)
+    x = args[1]
+    set(a, :axis) do
+        axes(x, 1)
+    end
+end
+
 function _expectedvalue(x, y; axis, estimator = mean)
     itr = finduniquesorted(x)
     collect_columns((key, estimator(y[idxs])) for (key, idxs) in itr)
@@ -72,7 +81,16 @@ function _localregression(x, y; axis, kwargs...)
     StructVector((within, prediction))
 end
 
-const prediction = Analysis((continuous = _localregression, discrete = _expectedvalue))
+function _alignedsummary(xs, ys; axis, min_nobs = 2, estimator = Mean, kwargs...)
+    iter = (view(y, x) for (x, y) in zip(xs, ys))
+    sa = fitvec(estimator, iter, axis)
+    full_axis = axes(sa, 1)
+    full_data = last(fieldarrays(sa))
+    mask = findall(t -> t >= min_nobs, first(fieldarrays(sa)))
+    StructArray((full_axis[mask], full_data[mask]))
+end
+
+const prediction = Analysis((continuous = _localregression, discrete = _expectedvalue, vectorial = _alignedsummary))
 
 function _density(x; axis, kwargs...)
     data = pdf(kde(x; kwargs...), axis)
@@ -107,4 +125,3 @@ const hazardfunctions = map(density.f) do _density
 end
 
 const hazard = Analysis(hazardfunctions)
-
