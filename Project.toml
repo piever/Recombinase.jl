@@ -18,6 +18,9 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 Widgets = "cc8bc4a8-27d6-5769-a93b-9d913e69aa62"
 
+[compat]
+StructArrays = ">=0.3.4"
+
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
