@@ -11,9 +11,10 @@ Analysis(args...; kwargs...) = Analysis{:auto}(args...; kwargs...)
 
 getfunction(funcs, S) = funcs
 getfunction(funcs::NamedTuple, S::Symbol) = getfield(funcs, S)
+getfunction(a::Analysis{S}) where {S} = getfunction(a.f, S)
 
 (a::Analysis{S})(; kwargs...) where {S} = Analysis{S}(a; kwargs...)
-(a::Analysis{S})(args...) where {S} = getfunction(a.f, S)(args...; a.kwargs...)
+(a::Analysis{S})(args...) where {S} = getfunction(a)(args...; a.kwargs...)
 
 discrete(a::Analysis) = Analysis{:discrete}(a.f, a.kwargs)
 continuous(a::Analysis) = Analysis{:continuous}(a.f, a.kwargs)
@@ -67,11 +68,14 @@ function compute_axis(a::Analysis{:vectorial}, args...)
     end
 end
 
-function _expectedvalue(x, y; axis, summaries, estimator = mean)
+has_estimator(a::Analysis) = has_estimator(getfunction(a))
+has_estimator(f) = false
+
+function _expectedvalue(x, y; axis, summaries, estimator = Mean)
     itr = finduniquesorted(x)
-    lo, hi = extrema(axis)
+    lo, hi = extrema(axes(axis, 1))
     for (key, idxs) in itr
-        result = estimator(view(y, idxs))
+        result = apply(estimator, view(y, idxs))
         ind = searchsortedfirst(axis, key, lo, hi, Base.Order.Forward)
         lo = ind + 1
         ind > hi && break
@@ -79,6 +83,8 @@ function _expectedvalue(x, y; axis, summaries, estimator = mean)
     end
     return
 end
+
+has_estimator(::typeof(_expectedvalue)) = true
 
 function _localregression(x, y; axis, summaries, kwargs...)
     min, max = extrema(x)

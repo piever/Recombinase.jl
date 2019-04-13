@@ -8,6 +8,7 @@ First, let us load the relevant packages and an example dataset:
 
 ```julia
 using Statistics, StatsBase, StatsPlots, JuliaDB
+using OnlineStats
 using Recombinase: Group, series2D, datafolder
 using Recombinase: compute_summary, discrete, density, hazard, cumulative, prediction
 
@@ -41,6 +42,8 @@ scatter(args...; kwargs...)
 ```
 ![acrossschool](https://user-images.githubusercontent.com/6333339/55731389-0c131880-5a12-11e9-920e-1ead0d1a7d06.png)
 
+By default, this computes the mean and standard error, we can pass `estimator = Mean` to only compute the mean.
+
 ### Splitting by many variables
 
 We can use different attributes to split the data as follows:
@@ -51,6 +54,7 @@ args, kwargs = series2D(
     Group(color = :Sx, markershape = :Sector),
     error = :School,
     select = (:MAch, :SSS),
+    estimator = Mean
     )
 scatter(args...; kwargs...)
 ```
@@ -66,6 +70,7 @@ args, kwargs = series2D(
     Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
+    estimator = Mean
     color = [:red, :blue]
     )
 scatter(args...; kwargs...)
@@ -80,6 +85,7 @@ args, kwargs = series2D(
     Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
+    estimator = Mean
     )
 scatter(args...; legend = :topleft, markersize = 10, kwargs...)
 ```

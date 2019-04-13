@@ -45,7 +45,7 @@ args, kwargs = series2D(
     Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
-    min_nobs = 0
+    min_nobs = 2
     )
 scatter(args...; kwargs...)
 
