@@ -82,11 +82,12 @@ function _expectedvalue(x, y; axis, estimator = mean)
 end
 
 function _localregression(x, y; axis, kwargs...)
-    within = filter(t -> minimum(x)<= t <= maximum(x), axis)
+    mask = findall(t -> minimum(x)<= t <= maximum(x), axis)
+    within = axis[mask]
     prediction = fill(NaN, length(axis))
     if length(within) > 0
         model = loess(convert(Vector{Float64}, x), convert(Vector{Float64}, y); kwargs...)
-        prediction[within] = predict(model, within)
+        prediction[mask] = predict(model, within)
     end
     prediction
 end

@@ -6,7 +6,7 @@ using JuliaDB
 data = loadtable(joinpath(datafolder, "school.csv"))
 t = columns(data)
 
-res = compute_summary(t.School, t.SSS, t.CSES, summarize=(median, std))
+res = compute_summary(t.School, (t.SSS, t.CSES))
 
 compute_summary(density, t.School, t.MAch)
 
@@ -14,7 +14,7 @@ compute_summary(discrete(density), t.School, rand(1:100, length(t.School)))
 
 compute_summary(hazard, t.School, t.MAch)
 
-compute_summary(prediction, t.School, t.MAch, t.SSS)
+compute_summary(prediction, t.School, (t.MAch, t.SSS))
 
 using Plots
 

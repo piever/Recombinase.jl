@@ -43,7 +43,7 @@ function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup;
     data = StructVector(cols)
     _compute_summary!(analysis, keys, perm, data, summaries)
     summary = collect_columns(s[] for s in summaries)
-    return StructArray(axis => summary)
+    return StructArray(axis => StructArray((summary,)))
 end
 
 function _compute_summary!(analysis, keys, perm, data, summaries)
@@ -70,4 +70,5 @@ tupleofarrays(s::StructVector) = Tuple(fieldarrays(s))
 
 to_tuple(s::Tup) = s
 to_tuple(v) = (v,)
-columntuple(t, cols = All()) = to_tuple(columns(t, cols))
+columntuple(t, cols) = to_tuple(columns(t, cols))
+columntuple(t) = to_tuple(columns(t))
