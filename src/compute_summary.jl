@@ -24,11 +24,15 @@ end
 fit!(s::Summary, vec) = (fit!(s.series, vec); s)
 Base.getindex(s::Summary) = _mean_trend(s.confidence, s.series)
 
+compute_summary(keys::AbstractVector, cols::AbstractVector; kwargs...) = compute_summary(keys, (cols,); kwargs...)
 function compute_summary(keys::AbstractVector, cols::Tup; perm = sortperm(keys), kwargs...)
     itr = finduniquesorted(keys, perm)
     s = Summary(; kwargs...)
     collect_columns(key => map(col -> fit!(s, view(col, idxs))[], cols) for (key, idxs) in itr)
 end
+
+compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::AbstractVector; kwargs...) =
+    compute_summary(f, keys, (cols,); kwargs...)
 
 function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup; perm = sortperm(keys),
     kwargs...)
