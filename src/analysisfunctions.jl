@@ -95,14 +95,18 @@ function _localregression(x, y; axis, summaries, kwargs...)
     return
 end
 
-function _alignedsummary(xs, ys; axis, summaries, estimator = Mean, kwargs...)
+function _alignedsummary(xs, ys; axis, summaries, estimator = Mean, min_nobs = 1, kwargs...)
     iter = (view(y, x) for (x, y) in zip(xs, ys))
-    sa = fitvec(estimator, iter, axis)
-    full_data = last(fieldarrays(sa))
-    mask = findall(t -> t >= min_nobs, first(fieldarrays(sa)))
-    full_data[mask] = NaN
-    return full_data
+    stats = isnothing(estimator) ? OffsetArray(summaries, axis) : initstats(estimator, axis)
+    fitvecmany!(stats, iter)
+    if !isnothing(estimator)
+        for (stat, summary) in zip(stats, summaries)
+            nobs(stat) >= min_nobs && fit!(summary, value(stat)[1])
+        end
+    end
 end
+
+has_estimator(::typeof(_alignedsummary)) = true
 
 const prediction = Analysis((continuous = _localregression, discrete = _expectedvalue, vectorial = _alignedsummary))
 

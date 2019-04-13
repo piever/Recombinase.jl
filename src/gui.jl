@@ -35,7 +35,7 @@ function gui(data, plotters)
     yaxis = dropdown(maybens,label = "Y")
     an_opt = dropdown(analysis_options, label = "Analysis")
     axis_type = dropdown([:auto, :continuous, :discrete, :vectorial], label = "Axis type")
-    error = dropdown(Observables.@map(vcat(observations, (), &ns)), label="Error")
+    error = dropdown(Observables.@map(vcat(automatic, &ns)), label="Error")
     styles = collect(keys(style_dict))
     sort!(styles)
     splitters = [dropdown(maybens, label = string(style)) for style in styles]
