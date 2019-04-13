@@ -41,10 +41,16 @@ end
 
 series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
-function series2D(f, t′::IndexedTable, g = Group(); select, error = observations, ribbon = false, filter = isfinite, summarize = nothing, kwargs...)
+_confidence(var, nobs) = sqrt(var / nobs)
 
-    no_error = isnothing(f) ? error === observations : error == ()
-    summarize = something(summarize, no_error ? mean : (mean, sem))
+function series2D(f, t′::IndexedTable, g = Group();
+    select, error = false, ribbon = false, filter = isfinite,
+    estimator = (Mean, Var), confidence = _confidence, min_nobs = 2, kwargs...)
+
+    if isnothing(f)
+        (error isa Bool) && (error = error ? () : observations)
+    else
+
     error == () && (error = fill(0, length(t′)))
     if error isa AbstractVector
         counter = 0

@@ -38,6 +38,8 @@ infer_axis(x::AbstractVector{T}, args...) where {T<:Union{Missing, AbstractArray
 infer_axis(x::AbstractVector{Missing}, args...) = error("All data is missing")
 infer_axis(x, args...) = Analysis{:discrete}
 
+get_axis(s::Analysis) = get(a, :axis, nothing)
+
 function compute_axis(a::Analysis, args...)
     a_inf = infer_axis(args...)(a.f, a.kwargs)
     compute_axis(a_inf, args...)
@@ -65,9 +67,9 @@ function compute_axis(a::Analysis{:vectorial}, args...)
     end
 end
 
-function _expectedvalue(x, y; axis, estimator = mean)
+function _expectedvalue(x, y; axis, estimator = (mean, var))
     itr = finduniquesorted(x)
-    collect_columns((key, estimator(y[idxs])) for (key, idxs) in itr)
+    collect_columns((key, apply(estimator, y[idxs])) for (key, idxs) in itr)
 end
 
 function _localregression(x, y; axis, kwargs...)

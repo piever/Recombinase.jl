@@ -1,43 +1,64 @@
 const Tup = Union{Tuple, NamedTuple}
 
-splitapply(f, keys::AbstractVector, cols::AbstractVector...; kwargs...) = splitapply(f, keys, cols; kwargs...)
-
-function splitapply(f, keys::AbstractVector, cols::Tup; perm = sortperm(keys))
-    itr = finduniquesorted(keys, perm)
-    data = StructVector(cols)
-    return collect_columns_flattened(key => f(tupleofarrays(data[idxs])...) for (key, idxs) in itr)
-end
+_default_confidence(nobs, mean, var) = sqrt(var / nobs)
+_mean_trend(confidence, res::OnlineStat) = _mean_trend(confidence, nobs(res), value(res)...) =
+_mean_trend(confidence, nobs, arg) = arg
+_mean_trend(confidence, nobs, arg, args...) = (arg, confidence(nobs, arg, args...))
 
 apply(f, val) = f(val)
 apply(f::Tup, val) = map(t -> t(val), f)
+apply(f::Analysis, cols::Tup) = compute_axis(f, cols...)(cols)
+apply(f::Analysis, t::IndexedTable; select = cols) = apply(f, columntuple(t, cols))
 
-compute_error(keys::AbstractVector, cols::AbstractVector...; kwargs...) = compute_error(keys, cols; kwargs...)
+struct Summary{S, C}
+    series::S
+    confidence::C
+end
 
-function compute_error(keys::AbstractVector, cols::Tup; perm = sortperm(keys), filter = isfinite, summarize = (mean, sem))
+function Summary(; transform = identity, filter = isfinitevalue,
+    confidence = _default_confidence, estimator = (Mean, Variance))
+    return Summary(FTSeries(estimator...; filter = filter, transform = transform), confidence)
+end
+
+fit!(s::Summary, vec) = (fit!(s.series, vec); s)
+Base.getindex(s::Summary) = _mean_trend(s.confidence, s.series)
+
+function compute_summary(keys::AbstractVector, cols::Tup; perm = sortperm(keys), kwargs...)
+
     itr = finduniquesorted(keys, perm)
-    collect_columns(key => map(col -> apply(summarize, Base.filter(filter, view(col, idxs))), cols) for (key, idxs) in itr)
+    s = Summary(; kwargs...)
+    collect_columns(key => map(col -> fit!(s, view(col, idxs))[], cols) for (key, idxs) in itr)
 end
 
-compute_error(t::IndexedTable, args...; kwargs...) = compute_error(nothing, t, args...; kwargs...)
-compute_error(::Nothing, t::AbstractVector, args...; kwargs...) = compute_error(t, args...; kwargs...)
+compute_summary(cols::Tup; kwargs...) = StructArray(Base.OneTo(length(cols[1])) => Tuple(cols))
 
-compute_error(f::FunctionOrAnalysis, keys::AbstractVector, cols::AbstractVector...; kwargs...) = compute_error(f, keys, cols; kwargs...)
 
-function compute_error(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup; perm = sortperm(keys), kwargs...)
+# compute_summary(t::IndexedTable, args...; kwargs...) = compute_summary(nothing, t, args...; kwargs...)
+# compute_summary(::Nothing, t::AbstractVector, args...; kwargs...) = compute_summary(t, args...; kwargs...)
+
+
+function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup; perm = sortperm(keys),
+    kwargs...)
+
+    s = Summary(; kwargs...)
     a = compute_axis(f, cols...)
-    res = splitapply(a, keys, cols; perm = perm)
+    axis = get_axis(a)
+    data = StructVector(cols)
+    iter = (f(tupleofarrays(data[idxs])...) for (_, idxs) in finduniquesorted(keys, perm))
+
     summary = res.second
-    compute_error(tupleofarrays(summary)...; kwargs...)
+    tup = tupleofarrays(summary)
+    compute_summary(first(tup), Base.tail(tup); kwargs...)
 end
 
-function compute_error(f::Union{FunctionOrAnalysis, Nothing}, t::IndexedTable, keys; select, kwargs...)
-    perm, keys = sortpermby(t, keys, return_keys=true)
-    compute_error(f, keys, columntuple(t, select); perm=perm, kwargs...)
-end
+# function compute_summary(f::Union{FunctionOrAnalysis, Nothing}, t::IndexedTable, keys; select, kwargs...)
+#     perm, keys = sortpermby(t, keys, return_keys=true)
+#     compute_summary(f, keys, columntuple(t, select); perm=perm, kwargs...)
+# end
 
 tupleofarrays(s::Tup) = Tuple(s)
 tupleofarrays(s::StructVector) = Tuple(fieldarrays(s))
 
 to_tuple(s::Tup) = s
 to_tuple(v) = (v,)
-columntuple(args...) = to_tuple(columns(args...))
+columntuple(t, cols = All()) = to_tuple(columns(t, cols))
