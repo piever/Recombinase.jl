@@ -56,9 +56,22 @@ end
 
 compute_summary(::Nothing, args...; kwargs...) = compute_summary(args...; kwargs...)
 
+function compute_summary(t::IndexedTable, ::Nothing; select, kwargs...)
+    StructArray(Base.OneTo(length(t)) => rows(t, select))
+end
+
 function compute_summary(t::IndexedTable, keys; select, kwargs...)
     perm, keys = sortpermby(t, keys, return_keys=true)
     compute_summary(keys, columntuple(t, select); perm=perm, kwargs...)
+end
+
+function compute_summary(f::FunctionOrAnalysis, t::IndexedTable, ::Nothing; select, transform = identity, filter = isfinitevalue, kwargs...)
+    cols = columntuple(t, select)
+    analysis = compute_axis(f, cols...)
+    axis = get_axis(analysis)
+    res = analysis[cols]
+    mask = find(filter, res)
+    StructArray((axis[mask], map(transform, res[mask])))
 end
 
 function compute_summary(f::FunctionOrAnalysis, t::IndexedTable, keys; select, kwargs...)

@@ -42,7 +42,7 @@ end
 series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
 function series2D(f, t′::IndexedTable, g = Group();
-    select, error = observations, ribbon = false, filter = isfinite, transform = identity,
+    select, error = nothing, ribbon = false, filter = isfinite, transform = identity,
     estimator = (Mean, Variance), confidence = _default_confidence, min_nobs = 2, kwargs...)
 
     function get_summary(table)

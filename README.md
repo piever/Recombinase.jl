@@ -41,20 +41,6 @@ scatter(args...; kwargs...)
 ```
 ![acrossschool](https://user-images.githubusercontent.com/6333339/55731389-0c131880-5a12-11e9-920e-1ead0d1a7d06.png)
 
-The default is to compute mean and standard error of the mean for error bars. Any two functions could be used (or even just one function if one is not interested in the error bars):
-
-```julia
-args, kwargs = series2D(
-    data,
-    Group(:Sx),
-    error = :School,
-    select = (:MAch, :SSS),
-    summarize = median
-    )
-scatter(args...; kwargs...)
-```
-![median](https://user-images.githubusercontent.com/6333339/55731479-3664d600-5a12-11e9-94ea-28ab98cb06cd.png)
-
 ### Splitting by many variables
 
 We can use different attributes to split the data as follows:
@@ -65,7 +51,6 @@ args, kwargs = series2D(
     Group(color = :Sx, markershape = :Sector),
     error = :School,
     select = (:MAch, :SSS),
-    summarize = median
     )
 scatter(args...; kwargs...)
 ```
@@ -81,7 +66,6 @@ args, kwargs = series2D(
     Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
-    summarize = median,
     color = [:red, :blue]
     )
 scatter(args...; kwargs...)
@@ -96,7 +80,6 @@ args, kwargs = series2D(
     Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
-    summarize = median,
     )
 scatter(args...; legend = :topleft, markersize = 10, kwargs...)
 ```
