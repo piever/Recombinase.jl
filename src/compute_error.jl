@@ -35,9 +35,9 @@ function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup;
 
     analysis = compute_axis(f, cols...)
     axis = get_axis(analysis)
-    print(axis)
     summaries = [Summary(; kwargs...) for _ in axis]
     data = StructVector(cols)
+    _compute_summary!(analysis, keys, perm, data, summaries)
     summary = collect_columns(s[] for s in summaries)
     return StructArray(axis => summary)
 end

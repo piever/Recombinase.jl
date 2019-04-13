@@ -23,7 +23,7 @@ using OnlineStatsBase
         discrete(density),
         across,
         (x,),
-        estimator = mean
+        estimator = Mean
     )
     @test res.first == [1, 2, 3]
     @test columns(res.second, 1) ≈ [1, 1, 1]./3
