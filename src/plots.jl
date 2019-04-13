@@ -48,7 +48,7 @@ function series2D(f, t′::IndexedTable, g = Group();
     function get_summary(table)
         return compute_summary(f, table, error,
             select=select, transform=transform, filter=filter,
-            estimator=estimator, confidence=confidence)
+            estimator=estimator, confidence=confidence, min_nobs=min_nobs)
     end
 
     error == () && (error = fill(0, length(t′)))

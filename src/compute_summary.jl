@@ -22,19 +22,19 @@ function Summary(; transform = identity, filter = isfinitevalue,
 end
 
 fit!(s::Summary, vec) = (fit!(s.series, vec); s)
+nobs(s::Summary) = nobs(s.series)
 Base.getindex(s::Summary) = _mean_trend(s.confidence, s.series)
 
 compute_summary(keys::AbstractVector, cols::AbstractVector; kwargs...) = compute_summary(keys, (cols,); kwargs...)
-function compute_summary(keys::AbstractVector, cols::Tup; perm = sortperm(keys), kwargs...)
-    itr = finduniquesorted(keys, perm)
-    s = Summary(; kwargs...)
-    collect_columns(key => map(col -> fit!(s, view(col, idxs))[], cols) for (key, idxs) in itr)
+function compute_summary(keys::AbstractVector, cols::Tup; perm = sortperm(keys), min_nobs = 2, kwargs...)
+    iter = (key => map(col -> fit!(Summary(; kwargs...), view(col, idxs)), cols) for (key, idxs) in finduniquesorted(keys, perm))
+    collect_columns(key => map(getindex, vals) for (key, vals) in iter if all(t -> nobs(t) >= min_nobs, vals))
 end
 
 compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::AbstractVector; kwargs...) =
     compute_summary(f, keys, (cols,); kwargs...)
 
-function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup; perm = sortperm(keys),
+function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup; min_nobs = 2, perm = sortperm(keys),
     kwargs...)
 
     analysis = compute_axis(f, cols...)
@@ -43,7 +43,8 @@ function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup;
     data = StructVector(cols)
     _compute_summary!(analysis, keys, perm, data, summaries)
     summary = collect_columns(s[] for s in summaries)
-    return StructArray(axis => StructArray((summary,)))
+    mask = findall(t -> nobs(t) >= min_nobs, summaries)
+    return StructArray(axis[mask] => StructArray((summary[mask],)))
 end
 
 function _compute_summary!(analysis, keys, perm, data, summaries)

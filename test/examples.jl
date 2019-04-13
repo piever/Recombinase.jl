@@ -41,8 +41,19 @@ plot(args...; kwargs...)
 
 args, kwargs = series2D(
     data,
-    Group(color = :Sx, color = :Sx),
+    Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
-)
+    min_nobs = 0
+    )
 scatter(args...; kwargs...)
+
+args, kwargs = series2D(
+    density(bandwidth = 1),
+    data,
+    Group(color=:Sx, linestyle=:Sector),
+    error = :School,
+    select = :MAch,
+    ribbon = true
+   )
+plot(args...; kwargs..., legend = :bottom)
