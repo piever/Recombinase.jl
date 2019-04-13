@@ -38,7 +38,7 @@ infer_axis(x::AbstractVector{T}, args...) where {T<:Union{Missing, AbstractArray
 infer_axis(x::AbstractVector{Missing}, args...) = error("All data is missing")
 infer_axis(x, args...) = Analysis{:discrete}
 
-get_axis(s::Analysis) = get(a, :axis, nothing)
+get_axis(s::Analysis) = s.kwargs.axis
 
 function compute_axis(a::Analysis, args...)
     a_inf = infer_axis(args...)(a.f, a.kwargs)
@@ -56,7 +56,7 @@ end
 function compute_axis(a::Analysis{:discrete}, args...)
     x = args[1]
     set(a, :axis) do
-        unique(x)
+        unique(sort(x))
     end
 end
 
@@ -67,49 +67,54 @@ function compute_axis(a::Analysis{:vectorial}, args...)
     end
 end
 
-function _expectedvalue(x, y; axis, estimator = (mean, var))
+function _expectedvalue(x, y; axis, estimator = mean)
     itr = finduniquesorted(x)
-    collect_columns((key, apply(estimator, y[idxs])) for (key, idxs) in itr)
+    results = fill(NaN, length(axis))
+    lo, hi = extrema(axis)
+    for (key, idxs) in itr
+        result = estimator(view(y, idxs))
+        ind = searchsortedfirst(axis, key, lo, hi, Base.Order.Forward)
+        lo = ind + 1
+        ind <= hi && (results[ind] = result)
+    end
+    return results
 end
 
 function _localregression(x, y; axis, kwargs...)
     within = filter(t -> minimum(x)<= t <= maximum(x), axis)
+    prediction = fill(NaN, length(axis))
     if length(within) > 0
         model = loess(convert(Vector{Float64}, x), convert(Vector{Float64}, y); kwargs...)
-        prediction = predict(model, within)
-    else
-        prediction = Float64[]
+        prediction[within] = predict(model, within)
     end
-    StructVector((within, prediction))
+    prediction
 end
 
 function _alignedsummary(xs, ys; axis, min_nobs = 2, estimator = Mean, kwargs...)
     iter = (view(y, x) for (x, y) in zip(xs, ys))
     sa = fitvec(estimator, iter, axis)
-    full_axis = axes(sa, 1)
     full_data = last(fieldarrays(sa))
     mask = findall(t -> t >= min_nobs, first(fieldarrays(sa)))
-    StructArray((full_axis[mask], full_data[mask]))
+    full_data[mask] = NaN
+    return full_data
 end
 
 const prediction = Analysis((continuous = _localregression, discrete = _expectedvalue, vectorial = _alignedsummary))
 
 function _density(x; axis, kwargs...)
-    data = pdf(kde(x; kwargs...), axis)
-    StructVector((axis, data))
+    return pdf(kde(x; kwargs...), axis)
 end
 
 function _frequency(x; axis)
     c = countmap(x)
     s = sum(values(c))
-    StructVector((axis, [get(c, x, 0)/s for x in axis]))
+    [get(c, x, 0)/s for x in axis]
 end
 
 const density = Analysis((continuous = _density, discrete = _frequency))
 
 function _cumulative(x; axis, kwargs...)
-    data = ecdf(x)(axis)
-    StructVector((axis, data))
+    ecdf(x)(axis)
 end
 
 const cumulative = Analysis(_cumulative)
@@ -118,11 +123,8 @@ const hazardfunctions = map(density.f) do _density
     function (t; axis, kwargs...)
         pdf = _density(t; axis = axis, kwargs...)
         cdf = _cumulative(t; axis = axis)
-        pdfs = tupleofarrays(pdf)[2]
-        cdfs = tupleofarrays(cdf)[2]
         bs = step(axis)
-        haz = @. pdfs/(1 + bs * pdfs - cdfs)
-        StructVector((axis, haz))
+        return @. pdf/(1 + bs * pdf - cdf)
     end
 end
 

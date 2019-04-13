@@ -1,7 +1,7 @@
 using Statistics, StatsBase
 using StructArrays
 using Recombinase
-using Recombinase: compute_error, fitvec, aroundindex, discrete,
+using Recombinase: compute_summary, fitvec, aroundindex, discrete,
     prediction, density
 using Test
 using IndexedTables
