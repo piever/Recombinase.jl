@@ -67,32 +67,29 @@ function compute_axis(a::Analysis{:vectorial}, args...)
     end
 end
 
-function _expectedvalue(x, y; axis, estimator = mean)
+function _expectedvalue(x, y; axis, summaries, estimator = mean)
     itr = finduniquesorted(x)
-    results = fill(NaN, length(axis))
     lo, hi = extrema(axis)
     for (key, idxs) in itr
         result = estimator(view(y, idxs))
         ind = searchsortedfirst(axis, key, lo, hi, Base.Order.Forward)
         lo = ind + 1
         ind > hi && break
-        @inbounds results[ind] = result
+        fit!(summaries[ind], result)
     end
-    return results
+    return
 end
 
-function _localregression(x, y; axis, kwargs...)
-    mask = findall(t -> minimum(x)<= t <= maximum(x), axis)
-    within = axis[mask]
-    prediction = fill(NaN, length(axis))
-    if length(within) > 0
-        model = loess(convert(Vector{Float64}, x), convert(Vector{Float64}, y); kwargs...)
-        prediction[mask] = predict(model, within)
+function _localregression(x, y; axis, summaries, kwargs...)
+    min, max = extrema(x)
+    model = loess(convert(Vector{Float64}, x), convert(Vector{Float64}, y); kwargs...)
+    for (ind, val) in enumerate(axis)
+        (min < val < max) && fit!(summaries[ind], predict(model, val))
     end
-    prediction
+    return
 end
 
-function _alignedsummary(xs, ys; axis, min_nobs = 2, estimator = Mean, kwargs...)
+function _alignedsummary(xs, ys; axis, summaries, estimator = Mean, kwargs...)
     iter = (view(y, x) for (x, y) in zip(xs, ys))
     sa = fitvec(estimator, iter, axis)
     full_data = last(fieldarrays(sa))
@@ -103,30 +100,51 @@ end
 
 const prediction = Analysis((continuous = _localregression, discrete = _expectedvalue, vectorial = _alignedsummary))
 
-function _density(x; axis, kwargs...)
-    return pdf(kde(x; kwargs...), axis)
+function _density_function(x; kwargs...)
+    d = InterpKDE(kde(x; kwargs...))
+    t -> pdf(d, t)
+end
+function _density(x; axis, summaries, kwargs...)
+    func = _density_function(x; kwargs...)
+    foreach(summaries, axis) do stat, val
+        fit!(stat, func(val))
+    end
 end
 
-function _frequency(x; axis)
+function _frequency_function(x)
     c = countmap(x)
     s = sum(values(c))
-    [get(c, x, 0)/s for x in axis]
+    val -> get(c, val, 0)/s
+end
+
+function _frequency(x; axis, summaries)
+    func = _frequency_function(x)
+    foreach(summaries, axis) do stat, val
+        fit!(stat, func(val))
+    end
 end
 
 const density = Analysis((continuous = _density, discrete = _frequency))
 
-function _cumulative(x; axis, kwargs...)
-    ecdf(x)(axis)
+function _cumulative(x; axis, summaries, kwargs...)
+    func = ecdf(x)
+    foreach(summaries, axis) do stat, val
+        fit!(stat, func(val))
+    end
 end
 
 const cumulative = Analysis(_cumulative)
 
-const hazardfunctions = map(density.f) do _density
-    function (t; axis, kwargs...)
-        pdf = _density(t; axis = axis, kwargs...)
-        cdf = _cumulative(t; axis = axis)
-        bs = step(axis)
-        return @. pdf/(1 + bs * pdf - cdf)
+const hazardfunctions = map((continuous = _density_function, discrete = _frequency_function)) do _func
+    function (t; axis, summaries, kwargs...)
+        pdf_func = _func(t; kwargs...)
+        cdf_func = ecdf(t)
+        foreach(summaries, axis) do stat, val
+            pdf = pdf_func(val)
+            cdf = cdf_func(val)
+            haz = pdf / (1 + step(axis) * pdf - cdf)
+            fit!(stat, haz)
+        end
     end
 end
 

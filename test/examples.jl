@@ -7,6 +7,7 @@ data = loadtable(joinpath(datafolder, "school.csv"))
 t = columns(data)
 
 res = compute_summary(t.School, (t.SSS, t.CSES))
+using Juno
 
 compute_summary(density, t.School, t.MAch)
 
@@ -57,3 +58,5 @@ args, kwargs = series2D(
     ribbon = true
    )
 plot(args...; kwargs..., legend = :bottom)
+using Recombinase
+compute_summary(discrete(density), data, nothing, select =:MAch, min_nobs=0)

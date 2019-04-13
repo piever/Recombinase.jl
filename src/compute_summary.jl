@@ -41,16 +41,15 @@ function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup;
     axis = get_axis(analysis)
     summaries = [Summary(; kwargs...) for _ in axis]
     data = StructVector(cols)
-    _compute_summary!(analysis, keys, perm, data, summaries)
+    _compute_summary!(analysis(summaries = summaries), keys, perm, data)
     summary = collect_columns(s[] for s in summaries)
     mask = findall(t -> nobs(t) >= min_nobs, summaries)
     return StructArray(axis[mask] => StructArray((summary[mask],)))
 end
 
-function _compute_summary!(analysis, keys, perm, data, summaries)
+function _compute_summary!(analysis, keys, perm, data)
     for (_, idxs) in finduniquesorted(keys, perm)
-        res = analysis(tupleofarrays(data[idxs])...)
-        foreach(fit!, summaries, res)
+        analysis(tupleofarrays(view(data, idxs))...)
     end
 end
 
