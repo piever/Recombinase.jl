@@ -11,19 +11,19 @@ using OnlineStatsBase
     x = [1, 2, 3, 1, 2, 3]
     y = [0.3, 0.1, 0.3, 0.4, 0.2, 0.1]
     across = [1, 1, 1, 2, 2, 2]
-    res = compute_error(
+    res = compute_summary(
         discrete(prediction),
         across,
-        x, y,
-        summarize = mean
+        (x, y),
+        estimator = Mean
     )
     @test res.first == [1, 2, 3]
     @test columns(res.second, 1) ≈ [0.35, 0.15, 0.2]
-    res = compute_error(
+    res = compute_summary(
         discrete(density),
         across,
-        x,
-        summarize = mean
+        (x,),
+        estimator = mean
     )
     @test res.first == [1, 2, 3]
     @test columns(res.second, 1) ≈ [1, 1, 1]./3

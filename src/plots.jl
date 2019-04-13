@@ -41,15 +41,15 @@ end
 
 series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
-_confidence(var, nobs) = sqrt(var / nobs)
-
 function series2D(f, t′::IndexedTable, g = Group();
-    select, error = false, ribbon = false, filter = isfinite,
-    estimator = (Mean, Var), confidence = _confidence, min_nobs = 2, kwargs...)
+    select, error = observations, ribbon = false, filter = isfinite, transform = identity,
+    estimator = (Mean, Var), confidence = _default_confidence, min_nobs = 2, kwargs...)
 
-    if isnothing(f)
-        (error isa Bool) && (error = error ? () : observations)
-    else
+    function get_summary(table)
+        return compute_summary(f, table, error,
+            select=select, transform=transform, filter=filter,
+            estimator=estimator, confidence=confidence)
+    end
 
     error == () && (error = fill(0, length(t′)))
     if error isa AbstractVector
@@ -66,14 +66,17 @@ function series2D(f, t′::IndexedTable, g = Group();
     end
     group = g.kwargs
     if isempty(group)
-        args, kwargs = series2D(compute_error(f, t, error, select=select, filter=filter, summarize=summarize), ribbon = ribbon)
+        args, kwargs = series2D(
+            get_summary(t),
+            ribbon = ribbon
+        )
         kwargs[:group] = fill("", length(args[1]))
         return args, kwargs
     end
     by = _flatten(group)
     perm = sortpermby(t, by)
     itr = finduniquesorted(rows(t, by), perm)
-    data = collect_columns_flattened(key => compute_error(f, t[idxs], error, select=select,  filter=filter, summarize=summarize) for (key, idxs) in itr)
+    data = collect_columns_flattened(key => get_summary(t[idxs]) for (key, idxs) in itr)
     plot_args, plot_kwargs = series2D(data.second; ribbon = ribbon)
     plot_kwargs[:group] = columns(data.first)
     grpd = collect_columns(key for (key, _) in itr)

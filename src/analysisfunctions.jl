@@ -75,7 +75,8 @@ function _expectedvalue(x, y; axis, estimator = mean)
         result = estimator(view(y, idxs))
         ind = searchsortedfirst(axis, key, lo, hi, Base.Order.Forward)
         lo = ind + 1
-        ind <= hi && (results[ind] = result)
+        ind > hi && break
+        @inbounds results[ind] = result
     end
     return results
 end

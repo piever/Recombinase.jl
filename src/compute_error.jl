@@ -1,8 +1,8 @@
 const Tup = Union{Tuple, NamedTuple}
 
 _default_confidence(nobs, mean, var) = sqrt(var / nobs)
-_mean_trend(confidence, res::OnlineStat) = _mean_trend(confidence, nobs(res), value(res)...)
-_mean_trend(confidence, nobs, arg) = arg
+_mean_trend(confidence, res) = _mean_trend(confidence, nobs(res), value(res)...)
+_mean_trend(confidence, nobs, arg) = (arg,)
 _mean_trend(confidence, nobs, arg, args...) = (arg, confidence(nobs, arg, args...))
 
 apply(f, val) = f(val)
@@ -35,10 +35,10 @@ function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup;
 
     analysis = compute_axis(f, cols...)
     axis = get_axis(analysis)
+    print(axis)
     summaries = [Summary(; kwargs...) for _ in axis]
     data = StructVector(cols)
-    _compute_summary!(keys, perm, data, summaries)
-    summary = StructArray(s[] for s in summaries)
+    summary = collect_columns(s[] for s in summaries)
     return StructArray(axis => summary)
 end
 

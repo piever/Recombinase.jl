@@ -1,4 +1,3 @@
-using OnlineStatsBase: fit!, FTSeries, nobs, value, Mean
 using OffsetArrays: OffsetArray
 
 _padded_tuple(default, v::AbstractArray{T, N}, n::NTuple{N, Any}) where {T, N} = n
