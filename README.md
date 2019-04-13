@@ -9,7 +9,7 @@ First, let us load the relevant packages and an example dataset:
 ```julia
 using Statistics, StatsBase, StatsPlots, JuliaDB
 using Recombinase: Group, series2D, datafolder
-using Recombinase: compute_error, discrete, density, hazard, cumulative, prediction
+using Recombinase: compute_summary, discrete, density, hazard, cumulative, prediction
 
 data = loadtable(joinpath(datafolder, "school.csv"))
 ```

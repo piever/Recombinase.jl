@@ -1,20 +1,20 @@
 using Statistics, StatsBase
 using Recombinase: Group, series2D, datafolder
-using Recombinase: compute_error, discrete, density, hazard, prediction
+using Recombinase: compute_summary, discrete, density, hazard, prediction
 using JuliaDB
 
 data = loadtable(joinpath(datafolder, "school.csv"))
 t = columns(data)
 
-res = compute_error(t.School, t.SSS, t.CSES, summarize=(median, std))
+res = compute_summary(t.School, t.SSS, t.CSES, summarize=(median, std))
 
-compute_error(density, t.School, t.MAch)
+compute_summary(density, t.School, t.MAch)
 
-compute_error(discrete(density), t.School, rand(1:100, length(t.School)))
+compute_summary(discrete(density), t.School, rand(1:100, length(t.School)))
 
-compute_error(hazard, t.School, t.MAch)
+compute_summary(hazard, t.School, t.MAch)
 
-compute_error(prediction, t.School, t.MAch, t.SSS)
+compute_summary(prediction, t.School, t.MAch, t.SSS)
 
 using Plots
 

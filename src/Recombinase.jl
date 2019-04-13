@@ -19,7 +19,7 @@ datafolder = joinpath(@__DIR__, "..", "data")
 
 include("analysisfunctions.jl")
 include("timeseries.jl")
-include("compute_error.jl")
+include("compute_summary.jl")
 include("styles.jl")
 include("plots.jl")
 include("gui.jl")
