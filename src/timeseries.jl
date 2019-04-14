@@ -4,35 +4,19 @@ _padded_tuple(default, v::AbstractArray{T, N}, n::NTuple{N, Any}) where {T, N} =
 _padded_tuple(default, v::AbstractArray{T, N}, n::Any) where {T, N} = _padded_tuple(default, v, (n,))
 _padded_tuple(default, v::AbstractArray{T, N}, n::Tuple) where {T, N} = Tuple(i <= length(n) ? n[i] : default(v, i) for i in 1:N)
 
-struct TrimmedView{T, N, I, V<:AbstractArray}<:AbstractArray{T, N}
-    parent::V
-    trim::I
-    function TrimmedView(v::AbstractArray{T, N}, trim::NTuple{N, AbstractUnitRange}) where {T, N}
-        trimmed = map(intersect, axes(v), trim)
-        new{T, N, typeof(trimmed), typeof(v)}(v, trimmed)
+to_indexarray(t::Tuple{AbstractArray}) = t[1]
+to_indexarray(t::Tuple{AbstractArray, Vararg{AbstractArray}}) = CartesianIndices(t)
+
+function offsetrange(v, offset, range = axes(v))
+    padded_offset = _padded_tuple((args...) -> 0, v, offset)
+    padded_range = _padded_tuple(axes, v, range)
+    rel_offset = map(axes(v), padded_offset, padded_range) do ax, off, r
+        - off + first(r) - first(ax)
     end
-end
-function TrimmedView(v::AbstractArray{T, N}, trim) where {T, N}
-    padded_trim::NTuple{N, AbstractUnitRange} = _padded_tuple(axes, v, trim)
-    TrimmedView(v, padded_trim)
+    OffsetArray(to_indexarray(padded_range), rel_offset)
 end
 
-Base.parent(t::TrimmedView) = t.parent
-Base.axes(t::TrimmedView) = t.trim
-Base.size(t::TrimmedView) = map(length, axes(t))
-
-@inline Base.@propagate_inbounds function Base.getindex(A::TrimmedView, I...)
-    Base.@boundscheck checkbounds(A, I...)
-    @inbounds ret = parent(A)[I...]
-    ret
-end
-
-function aroundindex(v, shift)
-    padded_shift = _padded_tuple((args...) -> 0, v, shift)
-    OffsetArray(v, map(-, padded_shift))
-end
-
-aroundindex(v, shift, range) = TrimmedView(aroundindex(v, shift), range)
+aroundindex(v, args...) = view(v, offsetrange(v, args...))
 
 isfinitevalue(::Missing) = false
 isfinitevalue(x::Number) = isfinite(x)
