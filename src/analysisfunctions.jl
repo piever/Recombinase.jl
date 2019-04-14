@@ -109,7 +109,7 @@ function _alignedsummary(xs, ys; axis = vectorial_axis(xs, ys), min_nobs = 2, kw
     iter = (view(y, x) for (x, y) in zip(xs, ys))
     stats = OffsetArray([Summary(; kwargs...) for _ in axis], axis)
     fitvecmany!(stats, iter)
-    ((val, stat[]) for (val, stat) in zip(axis, stats) if nobs(val) >= min_nobs)
+    ((val, stat[]) for (val, stat) in zip(axis, stats) if nobs(stat) >= min_nobs)
 end
 
 has_error(::typeof(_alignedsummary)) = true
