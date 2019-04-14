@@ -36,12 +36,13 @@ end
     v2 = rand(50) # day 2
     traces = [v1, v1, v1, v2, v2, v2]
     ts = [10, 501, 733, 1, 20, 30]
+    trims = [7:13, 498:504, 730:736, 1:4, 17:23, 27:33]
     stats = (mean = Mean, variance = Variance)
     s = fitvec(stats, (aroundindex(trace, t) for (trace, t) in zip(traces, ts)), -5:5);
     @test axes(s) == (-5:5,)
     @test s[-3].nobs == 4
     @test s[-3] isa NamedTuple{(:nobs, :mean, :variance)}
-    s = fitvec(stats, (aroundindex(trace, t, -3:3) for (trace, t) in zip(traces, ts)), -5:5);
+    s = fitvec(stats, (aroundindex(trace, t, trim) for (trace, t, trim) in zip(traces, ts, trims)), -5:5);
     @test axes(s) == (-5:5,)
     @test s[-3].nobs == 4
     @test s[-3] isa NamedTuple{(:nobs, :mean, :variance)}
