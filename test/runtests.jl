@@ -17,16 +17,18 @@ using OnlineStatsBase
         (x, y),
         estimator = Mean
     )
-    @test res.first == [1, 2, 3]
-    @test columns(res.second, 1) ≈ [0.35, 0.15, 0.2]
+    x, y = fieldarrays(res)
+    @test x == [1, 2, 3]
+    @test y ≈ [0.35, 0.15, 0.2]
     res = compute_summary(
         discrete(density),
         across,
         (x,),
         estimator = Mean
     )
-    @test res.first == [1, 2, 3]
-    @test columns(res.second, 1) ≈ [1, 1, 1]./3
+    x, y = fieldarrays(res)
+    @test x == [1, 2, 3]
+    @test y ≈ [1, 1, 1]./3
 end
 
 @testset "timeseries" begin
