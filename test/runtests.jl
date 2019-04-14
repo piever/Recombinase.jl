@@ -1,7 +1,7 @@
 using Statistics, StatsBase
 using StructArrays
 using Recombinase
-using Recombinase: compute_error, fitvec, aroundindex, discrete,
+using Recombinase: compute_summary, fitvec, aroundindex, discrete,
     prediction, density
 using Test
 using IndexedTables
@@ -11,22 +11,24 @@ using OnlineStatsBase
     x = [1, 2, 3, 1, 2, 3]
     y = [0.3, 0.1, 0.3, 0.4, 0.2, 0.1]
     across = [1, 1, 1, 2, 2, 2]
-    res = compute_error(
-        discrete(prediction),
+    res = compute_summary(
+        discrete(prediction)(min_nobs = 1),
         across,
-        x, y,
-        summarize = mean
+        (x, y),
+        estimator = Mean
     )
-    @test res.first == [1, 2, 3]
-    @test columns(res.second, 1) ≈ [0.35, 0.15, 0.2]
-    res = compute_error(
+    xcol, ycol = fieldarrays(res)
+    @test xcol == [1, 2, 3]
+    @test map(Recombinase._first, ycol) ≈ [0.35, 0.15, 0.2]
+    res = compute_summary(
         discrete(density),
         across,
-        x,
-        summarize = mean
+        (x,),
+        estimator = Mean
     )
-    @test res.first == [1, 2, 3]
-    @test columns(res.second, 1) ≈ [1, 1, 1]./3
+    xcol, ycol = fieldarrays(res)
+    @test xcol == [1, 2, 3]
+    @test map(Recombinase._first, ycol) ≈ [1, 1, 1]./3
 end
 
 @testset "timeseries" begin

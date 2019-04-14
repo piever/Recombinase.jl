@@ -12,6 +12,21 @@ const analysis_options = OrderedDict(
     "Prediction" => Recombinase.prediction,
 )
 
+function is_small(col, n = 100)
+    for (ind, _) in enumerate(IterTools.distinct(col))
+        ind > n && return false
+    end
+    return true
+end
+
+function take_small(t, vec::AbstractVector{Symbol}, n = 100)
+    filter(vec) do sym
+        col = get(columns(t), sym, ())
+        return is_small(col, n)
+    end
+end
+
+
 """
 `gui(data, plotters)`
 
@@ -34,11 +49,12 @@ function gui(data, plotters)
     xaxis = dropdown(ns,label = "X")
     yaxis = dropdown(maybens,label = "Y")
     an_opt = dropdown(analysis_options, label = "Analysis")
-    axis_type = dropdown([:auto, :continuous, :discrete, :vectorial], label = "Axis type")
-    error = dropdown(Observables.@map(vcat(observations, (), &ns)), label="Error")
+    axis_type = dropdown([:automatic, :continuous, :discrete, :vectorial], label = "Axis type")
+    error = dropdown(Observables.@map(vcat(automatic, &ns)), label="Error")
     styles = collect(keys(style_dict))
     sort!(styles)
-    splitters = [dropdown(maybens, label = string(style)) for style in styles]
+    smallns = map(take_small, data, maybens)
+    splitters = [dropdown(smallns, label = string(style)) for style in styles]
     plotter = dropdown(plotters, label = "Plotter")
     ribbon = toggle("Ribbon", value = false)
     btn = button("Plot")

@@ -16,58 +16,39 @@ to_string(nt::NamedTuple) = join(("$a = $b" for (a, b) in pairs(nt)), ", ")
 struct Observations; end
 const observations = Observations()
 Base.string(::Observations) = "observations"
+
 function sortpermby(t::IndexedTable, ::Observations; return_keys = false)
     perm = Base.OneTo(length(t))
     return return_keys ? (perm, perm) : perm
 end
 
-function series2D(s::StructVector{<:Pair}; ribbon = false)
-    cols = fieldarrays(s.second)
+function series2D(s::StructVector; ribbon = false)
     kwargs = Dict{Symbol, Any}()
-    if length(cols) == 1
-        x = s.first
-        ycols = columntuple(cols[1])
-        y = ycols[1]
-        yerr = ifelse(ribbon, :ribbon, :yerr)
-        length(ycols) == 2 && (kwargs[yerr] = ycols[2])
-    else
-        xcols, ycols = map(columntuple, cols)
-        x, y = xcols[1], ycols[1]
-        length(xcols) == 2 && (kwargs[:xerr] = xcols[2])
-        length(ycols) == 2 && (kwargs[:yerr] = ycols[2])
-    end
+    xcols, ycols = map(columntuple, fieldarrays(s))
+    x, y = xcols[1], ycols[1]
+    yerr = ifelse(ribbon, :ribbon, :yerr)
+    length(xcols) == 2 && (kwargs[:xerr] = xcols[2])
+    length(ycols) == 2 && (kwargs[yerr] = ycols[2])
     return (x, y), kwargs
 end
 
 series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
-function series2D(f, t′::IndexedTable, g = Group(); select, error = observations, ribbon = false, filter = isfinite, summarize = nothing, kwargs...)
+function series2D(f, t::IndexedTable, g = Group();
+    select, error = automatic, ribbon = false, filter = isfinite, transform = identity,
+    estimator = (Mean, Variance), confidence = _default_confidence, min_nobs = 2, kwargs...)
 
-    no_error = isnothing(f) ? error === observations : error == ()
-    summarize = something(summarize, no_error ? mean : (mean, sem))
-    error == () && (error = fill(0, length(t′)))
-    if error isa AbstractVector
-        counter = 0
-        sym =:error
-        while sym in colnames(t′)
-            counter += 1
-            sym = Symbol("$error_$counter")
-        end
-        t = pushcol(t′, sym => error)
-        error = sym
-    else
-        t = t′
-    end
+    summary_kwargs = (select=select, transform=transform, filter=filter, estimator=estimator, confidence=confidence)
+
     group = g.kwargs
     if isempty(group)
-        args, kwargs = series2D(compute_error(f, t, error, select=select, filter=filter, summarize=summarize), ribbon = ribbon)
-        kwargs[:group] = fill("", length(args[1]))
-        return args, kwargs
+        itr = ("" => :,)
+    else
+        by = _flatten(group)
+        perm = sortpermby(t, by)
+        itr = finduniquesorted(rows(t, by), perm)
     end
-    by = _flatten(group)
-    perm = sortpermby(t, by)
-    itr = finduniquesorted(rows(t, by), perm)
-    data = collect_columns_flattened(key => compute_error(f, t[idxs], error, select=select,  filter=filter, summarize=summarize) for (key, idxs) in itr)
+    data = collect_columns_flattened(key => compute_summary(f, view(t, idxs), error; min_nobs = min_nobs, summary_kwargs...) for (key, idxs) in itr)
     plot_args, plot_kwargs = series2D(data.second; ribbon = ribbon)
     plot_kwargs[:group] = columns(data.first)
     grpd = collect_columns(key for (key, _) in itr)

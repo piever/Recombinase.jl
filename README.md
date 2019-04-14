@@ -8,8 +8,9 @@ First, let us load the relevant packages and an example dataset:
 
 ```julia
 using Statistics, StatsBase, StatsPlots, JuliaDB
+using OnlineStats
 using Recombinase: Group, series2D, datafolder
-using Recombinase: compute_error, discrete, density, hazard, cumulative, prediction
+using Recombinase: compute_summary, discrete, density, hazard, cumulative, prediction
 
 data = loadtable(joinpath(datafolder, "school.csv"))
 ```
@@ -41,19 +42,7 @@ scatter(args...; kwargs...)
 ```
 ![acrossschool](https://user-images.githubusercontent.com/6333339/55731389-0c131880-5a12-11e9-920e-1ead0d1a7d06.png)
 
-The default is to compute mean and standard error of the mean for error bars. Any two functions could be used (or even just one function if one is not interested in the error bars):
-
-```julia
-args, kwargs = series2D(
-    data,
-    Group(:Sx),
-    error = :School,
-    select = (:MAch, :SSS),
-    summarize = median
-    )
-scatter(args...; kwargs...)
-```
-![median](https://user-images.githubusercontent.com/6333339/55731479-3664d600-5a12-11e9-94ea-28ab98cb06cd.png)
+By default, this computes the mean and standard error, we can pass `estimator = Mean` to only compute the mean.
 
 ### Splitting by many variables
 
@@ -65,7 +54,7 @@ args, kwargs = series2D(
     Group(color = :Sx, markershape = :Sector),
     error = :School,
     select = (:MAch, :SSS),
-    summarize = median
+    estimator = Mean,
     )
 scatter(args...; kwargs...)
 ```
@@ -81,7 +70,7 @@ args, kwargs = series2D(
     Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
-    summarize = median,
+    estimator = Mean,
     color = [:red, :blue]
     )
 scatter(args...; kwargs...)
@@ -96,7 +85,7 @@ args, kwargs = series2D(
     Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
-    summarize = median,
+    estimator = Mean,
     )
 scatter(args...; legend = :topleft, markersize = 10, kwargs...)
 ```
@@ -136,7 +125,7 @@ plot(args...; kwargs..., legend = :bottom)
 ```
 ![density](https://user-images.githubusercontent.com/6333339/55733209-56e25f80-5a15-11e9-909b-c24da810e73e.png)
 
-If we do not specify `error`, it defaults to `error = observations` (so we would compute the `sem` across observations).
+If we do not specify `error`, it defaults to the "analyses specific error". For discrete prediction it is the standard error of the mean across observations.
 
 ```julia
 args, kwargs = series2D(
@@ -148,8 +137,6 @@ args, kwargs = series2D(
 groupedbar(args...; kwargs...)
 ```
 ![barplot](https://user-images.githubusercontent.com/6333339/55737555-4635e780-5a1d-11e9-90a1-ab8c6efd12c3.png)
-
-This is useful to compute bar plots with error bars across observations, but makes less sense for other analyses (for example, for continuous analysis, it generally does not make sense). To instead clump all observations together, you can use `error = ()`.
 
 ### Axis style selection
 
