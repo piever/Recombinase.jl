@@ -68,34 +68,33 @@ function compute_axis(a::Analysis{:vectorial}, args...)
     end
 end
 
-has_estimator(a::Analysis) = has_estimator(getfunction(a))
-has_estimator(f) = false
-
-function _expectedvalue(x, y; axis, summaries, estimator = Mean)
-    itr = finduniquesorted(x)
+function fititer!(axis, summaries, iter)
     lo, hi = extrema(axes(axis, 1))
-    for (key, idxs) in itr
-        result = apply(estimator, view(y, idxs))
+    for (key, val) in iter
         ind = searchsortedfirst(axis, key, lo, hi, Base.Order.Forward)
         lo = ind + 1
         ind > hi && break
-        fit!(summaries[ind], result)
+        fit!(summaries[ind], val)
     end
-    return
 end
 
-has_estimator(::typeof(_expectedvalue)) = true
+has_error(a::Analysis) = has_error(getfunction(a))
+has_error(f) = false
 
-function _localregression(x, y; axis, summaries, kwargs...)
+function _expectedvalue(x, y; axis, estimator = Mean)
+    itr = finduniquesorted(x)
+    return ((key, apply(estimator, view(y, idxs))) for (key, idxs) in itr)
+end
+
+has_error(::typeof(_expectedvalue)) = true
+
+function _localregression(x, y; axis, kwargs...)
     min, max = extrema(x)
     model = loess(convert(Vector{Float64}, x), convert(Vector{Float64}, y); kwargs...)
-    for (ind, val) in enumerate(axis)
-        (min < val < max) && fit!(summaries[ind], predict(model, val))
-    end
-    return
+    return ((val, predict(model, val)) for (ind, val) in enumerate(axis) if min < val < max)
 end
 
-function _alignedsummary(xs, ys; axis, summaries, estimator = Mean, min_nobs = 1, kwargs...)
+function _alignedsummary(xs, ys; axis, estimator = Mean, min_nobs = 1, kwargs...)
     iter = (view(y, x) for (x, y) in zip(xs, ys))
     stats = isnothing(estimator) ? OffsetArray(summaries, axis) : initstats(estimator, axis)
     fitvecmany!(stats, iter)
@@ -106,55 +105,35 @@ function _alignedsummary(xs, ys; axis, summaries, estimator = Mean, min_nobs = 1
     end
 end
 
-has_estimator(::typeof(_alignedsummary)) = true
+has_error(::typeof(_alignedsummary)) = true
 
 const prediction = Analysis((continuous = _localregression, discrete = _expectedvalue, vectorial = _alignedsummary))
 
-function _density_function(x; kwargs...)
+function _density(x; axis, kwargs...)
     d = InterpKDE(kde(x; kwargs...))
-    t -> pdf(d, t)
-end
-function _density(x; axis, summaries, kwargs...)
-    func = _density_function(x; kwargs...)
-    foreach(summaries, axis) do stat, val
-        fit!(stat, func(val))
-    end
+    return ((val, pdf(d, val)) for val in axis)
 end
 
-function _frequency_function(x)
+function _frequency(x; axis)
     c = countmap(x)
     s = sum(values(c))
-    val -> get(c, val, 0)/s
-end
-
-function _frequency(x; axis, summaries)
-    func = _frequency_function(x)
-    foreach(summaries, axis) do stat, val
-        fit!(stat, func(val))
-    end
+    return ((val, get(c, val, 0)/s) for val in axis)
 end
 
 const density = Analysis((continuous = _density, discrete = _frequency))
 
-function _cumulative(x; axis, summaries, kwargs...)
+function _cumulative(x; axis, kwargs...)
     func = ecdf(x)
-    foreach(summaries, axis) do stat, val
-        fit!(stat, func(val))
-    end
+    return ((val, func(val)) for val in axis)
 end
 
 const cumulative = Analysis(_cumulative)
 
-const hazardfunctions = map((continuous = _density_function, discrete = _frequency_function)) do _func
-    function (t; axis, summaries, kwargs...)
-        pdf_func = _func(t; kwargs...)
+const hazardfunctions = map(density.f) do pdf_func
+    function (t; axis, kwargs...)
+        pdf_iter = pdf_func(t; axis = axis, kwargs...)
         cdf_func = ecdf(t)
-        foreach(summaries, axis) do stat, val
-            pdf = pdf_func(val)
-            cdf = cdf_func(val)
-            haz = pdf / (1 + step(axis) * pdf - cdf)
-            fit!(stat, haz)
-        end
+        return ((val, pdf / (1 + step(axis) * pdf - cdf_func(val))) for (val, pdf) in pdf_iter)
     end
 end
 
