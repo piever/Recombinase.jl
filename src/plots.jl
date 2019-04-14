@@ -21,21 +21,13 @@ function sortpermby(t::IndexedTable, ::Observations; return_keys = false)
     return return_keys ? (perm, perm) : perm
 end
 
-function series2D(s::StructVector{<:Pair}; ribbon = false)
-    cols = fieldarrays(s.second)
+function series2D(s::StructVector; ribbon = false)
     kwargs = Dict{Symbol, Any}()
-    if length(cols) == 1
-        x = s.first
-        ycols = columntuple(cols[1])
-        y = ycols[1]
-        yerr = ifelse(ribbon, :ribbon, :yerr)
-        length(ycols) == 2 && (kwargs[yerr] = ycols[2])
-    else
-        xcols, ycols = map(columntuple, cols)
-        x, y = xcols[1], ycols[1]
-        length(xcols) == 2 && (kwargs[:xerr] = xcols[2])
-        length(ycols) == 2 && (kwargs[:yerr] = ycols[2])
-    end
+    xcols, ycols = map(columntuple, fieldarrays(s))
+    x, y = xcols[1], ycols[1]
+    yerr = ifelse(ribbon, :ribbon, :yerr)
+    length(xcols) == 2 && (kwargs[:xerr] = xcols[2])
+    length(ycols) == 2 && (kwargs[yerr] = ycols[2])
     return (x, y), kwargs
 end
 

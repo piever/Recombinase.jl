@@ -9,8 +9,10 @@ t = columns(data)
 res = compute_summary(t.School, (t.SSS, t.CSES))
 using Juno
 
-compute_summary(density, t.School, t.MAch)
-
+args, kwargs = series2D(collect_columns(density(t.MAch)), ribbon = true)
+plot(args...; kwargs...)
+using IndexedTables
+prediction(t.Sx, t.SSS) |> first
 compute_summary(discrete(density), t.School, rand(1:100, length(t.School)))
 
 compute_summary(hazard, t.School, t.MAch)
@@ -57,6 +59,17 @@ args, kwargs = series2D(
     select = :MAch,
     ribbon = true
    )
+plot(args...; kwargs...)
+
+args, kwargs = series2D(
+   prediction,
+   data,
+   Group(color = :Minrty),
+   error = :School,
+   select = (:Sx, :MAch),
+)
+groupedbar(args...; kwargs...)
+
 plot(args...; kwargs..., legend = :bottom)
 using Recombinase
 compute_summary(discrete(density), data, nothing, select =:MAch, min_nobs=0)
