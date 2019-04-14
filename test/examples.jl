@@ -61,6 +61,13 @@ args, kwargs = series2D(
    )
 plot(args...; kwargs...)
 
+args, kwargs = series2D(
+    density(bandwidth = 1),
+    data,
+    select = :MAch,
+   )
+plot(args...; kwargs...)
+
 using StatsPlots
 args, kwargs = series2D(
    prediction,

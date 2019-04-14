@@ -34,38 +34,21 @@ end
 
 series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
-function series2D(f, t′::IndexedTable, g = Group();
+function series2D(f, t::IndexedTable, g = Group();
     select, error = automatic, ribbon = false, filter = isfinite, transform = identity,
     estimator = (Mean, Variance), confidence = _default_confidence, min_nobs = 2, kwargs...)
 
     summary_kwargs = (select=select, transform=transform, filter=filter, estimator=estimator, confidence=confidence)
 
-    error == () && (error = fill(0, length(t′)))
-    if error isa AbstractVector
-        counter = 0
-        sym =:error
-        while sym in colnames(t′)
-            counter += 1
-            sym = Symbol("$error_$counter")
-        end
-        t = pushcol(t′, sym => error)
-        error = sym
-    else
-        t = t′
-    end
     group = g.kwargs
     if isempty(group)
-        args, kwargs = series2D(
-            compute_summary(f, t, error; min_nobs = min_nobs, summary_kwargs...),
-            ribbon = ribbon
-        )
-        kwargs[:group] = fill("", length(args[1]))
-        return args, kwargs
+        itr = ("" => :,)
+    else
+        by = _flatten(group)
+        perm = sortpermby(t, by)
+        itr = finduniquesorted(rows(t, by), perm)
     end
-    by = _flatten(group)
-    perm = sortpermby(t, by)
-    itr = finduniquesorted(rows(t, by), perm)
-    data = collect_columns_flattened(key => compute_summary(f, t[idxs], error; min_nobs = min_nobs, summary_kwargs...) for (key, idxs) in itr)
+    data = collect_columns_flattened(key => compute_summary(f, view(t, idxs), error; min_nobs = min_nobs, summary_kwargs...) for (key, idxs) in itr)
     plot_args, plot_kwargs = series2D(data.second; ribbon = ribbon)
     plot_kwargs[:group] = columns(data.first)
     grpd = collect_columns(key for (key, _) in itr)
