@@ -12,23 +12,23 @@ using OnlineStatsBase
     y = [0.3, 0.1, 0.3, 0.4, 0.2, 0.1]
     across = [1, 1, 1, 2, 2, 2]
     res = compute_summary(
-        discrete(prediction),
+        discrete(prediction)(min_nobs = 1),
         across,
         (x, y),
         estimator = Mean
     )
-    x, y = fieldarrays(res)
-    @test x == [1, 2, 3]
-    @test y ≈ [0.35, 0.15, 0.2]
+    xcol, ycol = fieldarrays(res)
+    @test xcol == [1, 2, 3]
+    @test map(Recombinase._first, ycol) ≈ [0.35, 0.15, 0.2]
     res = compute_summary(
         discrete(density),
         across,
         (x,),
         estimator = Mean
     )
-    x, y = fieldarrays(res)
-    @test x == [1, 2, 3]
-    @test y ≈ [1, 1, 1]./3
+    xcol, ycol = fieldarrays(res)
+    @test xcol == [1, 2, 3]
+    @test map(Recombinase._first, ycol) ≈ [1, 1, 1]./3
 end
 
 @testset "timeseries" begin
