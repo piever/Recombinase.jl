@@ -12,6 +12,18 @@ const analysis_options = OrderedDict(
     "Prediction" => Recombinase.prediction,
 )
 
+function is_small(col, n = 100)
+    for (ind, _) in enumerate(IterTools.distinct(col))
+        ind > n && return false
+    end
+    return true
+end
+
+function take_small(vec)
+    filter(is_small, vec)
+end
+
+
 """
 `gui(data, plotters)`
 
@@ -38,7 +50,8 @@ function gui(data, plotters)
     error = dropdown(Observables.@map(vcat(automatic, &ns)), label="Error")
     styles = collect(keys(style_dict))
     sort!(styles)
-    splitters = [dropdown(maybens, label = string(style)) for style in styles]
+    smallns = map(take_small, ns)
+    splitters = [dropdown(smallns, label = string(style)) for style in styles]
     plotter = dropdown(plotters, label = "Plotter")
     ribbon = toggle("Ribbon", value = false)
     btn = button("Plot")

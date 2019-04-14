@@ -61,15 +61,20 @@ args, kwargs = series2D(
    )
 plot(args...; kwargs...)
 
+using StatsPlots
 args, kwargs = series2D(
    prediction,
    data,
    Group(color = :Minrty),
-   error = :School,
    select = (:Sx, :MAch),
 )
+
 groupedbar(args...; kwargs...)
 
-plot(args...; kwargs..., legend = :bottom)
-using Recombinase
-compute_summary(discrete(density), data, nothing, select =:MAch, min_nobs=0)
+##
+
+using Recombinase, Interact, StatsPlots, Blink
+# here we give the functions we want to use for plotting
+ui = Recombinase.gui(data, [plot, scatter, groupedbar]);
+w = Window()
+body!(w, ui)

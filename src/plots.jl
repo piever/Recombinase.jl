@@ -16,6 +16,7 @@ to_string(nt::NamedTuple) = join(("$a = $b" for (a, b) in pairs(nt)), ", ")
 struct Observations; end
 const observations = Observations()
 Base.string(::Observations) = "observations"
+
 function sortpermby(t::IndexedTable, ::Observations; return_keys = false)
     perm = Base.OneTo(length(t))
     return return_keys ? (perm, perm) : perm
@@ -34,14 +35,10 @@ end
 series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
 function series2D(f, t′::IndexedTable, g = Group();
-    select, error = nothing, ribbon = false, filter = isfinite, transform = identity,
+    select, error = automatic, ribbon = false, filter = isfinite, transform = identity,
     estimator = (Mean, Variance), confidence = _default_confidence, min_nobs = 2, kwargs...)
 
-    function get_summary(table)
-        return compute_summary(f, table, error,
-            select=select, transform=transform, filter=filter,
-            estimator=estimator, confidence=confidence, min_nobs=min_nobs)
-    end
+    summary_kwargs = (select=select, transform=transform, filter=filter, estimator=estimator, confidence=confidence)
 
     error == () && (error = fill(0, length(t′)))
     if error isa AbstractVector
@@ -59,7 +56,7 @@ function series2D(f, t′::IndexedTable, g = Group();
     group = g.kwargs
     if isempty(group)
         args, kwargs = series2D(
-            get_summary(t),
+            compute_summary(f, t, error; min_nobs = min_nobs, summary_kwargs...),
             ribbon = ribbon
         )
         kwargs[:group] = fill("", length(args[1]))
@@ -68,7 +65,7 @@ function series2D(f, t′::IndexedTable, g = Group();
     by = _flatten(group)
     perm = sortpermby(t, by)
     itr = finduniquesorted(rows(t, by), perm)
-    data = collect_columns_flattened(key => get_summary(t[idxs]) for (key, idxs) in itr)
+    data = collect_columns_flattened(key => compute_summary(f, t[idxs], error; min_nobs = min_nobs, summary_kwargs...) for (key, idxs) in itr)
     plot_args, plot_kwargs = series2D(data.second; ribbon = ribbon)
     plot_kwargs[:group] = columns(data.first)
     grpd = collect_columns(key for (key, _) in itr)

@@ -54,7 +54,7 @@ args, kwargs = series2D(
     Group(color = :Sx, markershape = :Sector),
     error = :School,
     select = (:MAch, :SSS),
-    estimator = Mean
+    estimator = Mean,
     )
 scatter(args...; kwargs...)
 ```
@@ -70,7 +70,7 @@ args, kwargs = series2D(
     Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
-    estimator = Mean
+    estimator = Mean,
     color = [:red, :blue]
     )
 scatter(args...; kwargs...)
@@ -85,7 +85,7 @@ args, kwargs = series2D(
     Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
-    estimator = Mean
+    estimator = Mean,
     )
 scatter(args...; legend = :topleft, markersize = 10, kwargs...)
 ```

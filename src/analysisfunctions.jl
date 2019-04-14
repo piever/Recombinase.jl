@@ -88,7 +88,8 @@ function fititer!(axis, summaries, iter)
 end
 
 has_error(a::Analysis) = has_error(getfunction(a))
-has_error(f) = false
+has_error(a::Analysis, args...) = has_error(infer_axis(args...)(a))
+has_error(args...) = false
 
 function _expectedvalue(x, y; axis = nothing, min_nobs = 2, kwargs...)
     itr = finduniquesorted(x)
