@@ -125,7 +125,7 @@ plot(args...; kwargs..., legend = :bottom)
 ```
 ![density](https://user-images.githubusercontent.com/6333339/55733209-56e25f80-5a15-11e9-909b-c24da810e73e.png)
 
-If we do not specify `error`, it defaults to `error = observations` (so we would compute the `sem` across observations).
+If we do not specify `error`, it defaults to the "analyses specific error". For discrete prediction it is the standard error of the mean across observations.
 
 ```julia
 args, kwargs = series2D(
@@ -137,8 +137,6 @@ args, kwargs = series2D(
 groupedbar(args...; kwargs...)
 ```
 ![barplot](https://user-images.githubusercontent.com/6333339/55737555-4635e780-5a1d-11e9-90a1-ab8c6efd12c3.png)
-
-This is useful to compute bar plots with error bars across observations, but makes less sense for other analyses (for example, for continuous analysis, it generally does not make sense). To instead clump all observations together, you can use `error = ()`.
 
 ### Axis style selection
 

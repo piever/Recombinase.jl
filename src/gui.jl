@@ -19,8 +19,11 @@ function is_small(col, n = 100)
     return true
 end
 
-function take_small(vec)
-    filter(is_small, vec)
+function take_small(t, vec::AbstractVector{Symbol}, n = 100)
+    filter(vec) do sym
+        col = get(columns(t), sym, ())
+        return is_small(col, n)
+    end
 end
 
 
@@ -50,7 +53,7 @@ function gui(data, plotters)
     error = dropdown(Observables.@map(vcat(automatic, &ns)), label="Error")
     styles = collect(keys(style_dict))
     sort!(styles)
-    smallns = map(take_small, ns)
+    smallns = map(take_small, data, maybens)
     splitters = [dropdown(smallns, label = string(style)) for style in styles]
     plotter = dropdown(plotters, label = "Plotter")
     ribbon = toggle("Ribbon", value = false)
