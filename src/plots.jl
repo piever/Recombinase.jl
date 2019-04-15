@@ -36,9 +36,9 @@ series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwar
 
 function series2D(f, t::IndexedTable, g = Group();
     select, error = automatic, ribbon = false, filter = isfinite, transform = identity,
-    estimator = (Mean, Variance), confidence = _default_confidence, min_nobs = 2, kwargs...)
+    estimator = (Mean, Variance), postprocess = _postprocess, min_nobs = 2, kwargs...)
 
-    summary_kwargs = (select=select, transform=transform, filter=filter, estimator=estimator, confidence=confidence)
+    summary_kwargs = (select=select, transform=transform, filter=filter, estimator=estimator, postprocess=postprocess)
 
     group = g.kwargs
     if isempty(group)

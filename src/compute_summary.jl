@@ -1,9 +1,7 @@
 const Tup = Union{Tuple, NamedTuple}
 
-_default_confidence(nobs, mean, var) = sqrt(var / nobs)
-_mean_trend(confidence, res) = _mean_trend(confidence, nobs(res), value(res)...)
-_mean_trend(confidence, nobs, arg) = (arg,)
-_mean_trend(confidence, nobs, arg, args...) = (arg, confidence(nobs, arg, args...))
+_postprocess(nobs, mean, var, args...) = (mean, sqrt(var / nobs))
+_postprocess(nobs, mean) = (mean,)
 
 apply(f, val) = f(val)
 apply(::Nothing, val) = val
@@ -16,20 +14,20 @@ struct Automatic; end
 const automatic = Automatic()
 Base.string(::Automatic) = "automatic"
 
-struct Summary{S, C}
-    series::S
-    confidence::C
+struct Summary{S<:FTSeries, C}
+    ftseries::S
+    postprocess::C
 end
 
 function Summary(; transform = identity, filter = isfinitevalue,
-    confidence = _default_confidence, estimator = (Mean, Variance))
+    postprocess = _postprocess, estimator = (Mean, Variance))
     return Summary(FTSeries((stat() for stat in to_tuple(estimator))...;
-        filter = filter, transform = transform), confidence)
+        filter = filter, transform = transform), postprocess)
 end
 
-fit!(s::Summary, vec) = (fit!(s.series, vec); s)
-nobs(s::Summary) = nobs(s.series)
-Base.getindex(s::Summary) = _mean_trend(s.confidence, s.series)
+fit!(s::Summary, vec) = (fit!(s.ftseries, vec); s)
+nobs(s::Summary) = nobs(s.ftseries)
+Base.getindex(s::Summary) = s.postprocess(nobs(s.ftseries), value(s.ftseries)...)
 
 compute_summary(keys::AbstractVector, cols::AbstractVector; kwargs...) = compute_summary(keys, (cols,); kwargs...)
 function compute_summary(keys::AbstractVector, cols::Tup; perm = sortperm(keys), min_nobs = 2, kwargs...)
