@@ -70,4 +70,7 @@ compute_summary(density, data, :School; select = :MAch, stat = Series(Mean(), Va
 # and its value and uses them to compute trend and error.
 # To compute a different error bar (for example just the standard deviation) you can simply do:
 
-compute_summary(density, data, :School; select = :MAch, postprocess = (nobs, mean, var) -> (mean, sqrt(var)))
+using Recombinase: datafolder, compute_summary, MappedStat
+stats = Series(Mean(), Variance())
+postprocess(nobs, (mean, var)) = (mean, sqrt(var))
+compute_summary(density, data, :School; select = :MAch, stat = MappedStat(postprocess, stats))

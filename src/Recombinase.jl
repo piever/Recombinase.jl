@@ -12,7 +12,7 @@ using ColorTypes: RGB
 import Widgets, Observables
 using Widgets: Widget, dropdown, toggle, button
 using OrderedCollections: OrderedDict
-using OnlineStatsBase: Mean, Variance, OnlineStat
+using OnlineStatsBase: Mean, Variance, OnlineStat, FTSeries
 import OnlineStatsBase: fit!, nobs, value
 
 datafolder = joinpath(@__DIR__, "..", "data")

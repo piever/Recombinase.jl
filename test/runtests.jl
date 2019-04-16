@@ -15,7 +15,7 @@ using OnlineStatsBase
         discrete(prediction)(min_nobs = 1),
         across,
         (x, y),
-        estimator = Mean
+        stat = Mean()
     )
     xcol, ycol = fieldarrays(res)
     @test xcol == [1, 2, 3]
@@ -24,7 +24,7 @@ using OnlineStatsBase
         discrete(density),
         across,
         (x,),
-        estimator = Mean
+        stat = Mean()
     )
     xcol, ycol = fieldarrays(res)
     @test xcol == [1, 2, 3]
