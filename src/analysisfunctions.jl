@@ -94,7 +94,7 @@ has_error(args...) = false
 function _expectedvalue(x, y; axis = nothing, min_nobs = 2, stat = summary)
     itr = finduniquesorted(x)
     key_stat = ((key, fit!(copy(stat), view(y, idxs))) for (key, idxs) in itr)
-    return ((key, stat[]) for (key, stat) in key_stat if nobs(stat) >= min_nobs)
+    return ((key, value(stat)) for (key, stat) in key_stat if nobs(stat) >= min_nobs)
 end
 
 has_error(::typeof(_expectedvalue)) = true

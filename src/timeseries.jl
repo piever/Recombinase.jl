@@ -25,6 +25,7 @@ function initstats(stat, ranges)
     return OffsetArray(vec, ranges)
 end
 
+# TODO combine fititer! and fitvec!
 function fitvec!(m, val, shared_indices = eachindex(m, val))
     for cart in shared_indices
         @inbounds fit!(m[cart], val[cart])

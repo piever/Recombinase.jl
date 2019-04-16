@@ -20,7 +20,7 @@ end
 
 fit!(s::MappedStat, vec) = (fit!(s.stat, vec); s)
 nobs(s::MappedStat) = nobs(s.stat)
-value(s::MappedStat) = s.f(nobs(s), value(s))
+value(s::MappedStat) = s.f(nobs(s), value(s.stat))
 Base.copy(s::MappedStat) = MappedStat(s.f, copy(s.stat))
 
 isfinitevalue(::Missing) = false
@@ -47,9 +47,7 @@ function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup;
     summaries = [copy(stat) for _ in axis]
     data = StructVector(cols)
     _compute_summary!(axis, summaries, analysis, keys, perm, data)
-    summary = collect_columns(s[] for s in summaries)
-    mask = findall(t -> nobs(t) >= min_nobs, summaries)
-    return StructArray((axis[mask], summary[mask]))
+    return collect_columns((ax, value(s)) for (ax, s) in zip(axis, summaries) if nobs(s) >= min_nobs)
 end
 
 function _compute_summary!(axis, summaries, analysis, keys, perm, data)
