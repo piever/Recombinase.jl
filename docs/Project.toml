@@ -1,4 +1,5 @@
 [deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 JuliaDB = "a93385a2-3734-596a-9a66-3cfbb77141e6"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
 OnlineStats = "a15396b6-48d5-5d58-9928-6d29437db91e"
