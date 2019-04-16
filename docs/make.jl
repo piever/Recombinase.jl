@@ -17,6 +17,7 @@ makedocs(
    pages = [
         "index.md",
         "generated/tutorial.md",
+        "interactive_interface.md",
    ]
 )
 

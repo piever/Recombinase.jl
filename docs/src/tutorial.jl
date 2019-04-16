@@ -121,16 +121,3 @@ groupedbar(args...; kwargs...)
 # ### Axis style selection
 #
 # Analysis try to infer the axis type (continuous if the variable is numeric, categorical otherwise). If that is not appropriate for your data you can use `discrete(prediction)` or `continuous(prediction)` (works for `hazard`, `density` and `cumulative` as well).
-#
-# ### Interactive plotting
-#
-# Most of the above analysis can be selected from a simple [Interact](http://juliagizmos.github.io/Interact.jl/latest/)-based UI. To launch the UI simply do:
-#
-# ```julia
-# using Recombinase, Interact, StatsPlots, Blink
-# # here we give the functions we want to use for plotting
-# ui = Recombinase.gui(data, [plot, scatter, groupedbar]);
-# w = Window()
-# body!(w, ui)
-# ```
-# ![interactgui](https://user-images.githubusercontent.com/6333339/55816219-b3af4a00-5ae9-11e9-94f5-d3cc4e5d722d.png)
