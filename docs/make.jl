@@ -21,4 +21,6 @@ makedocs(
 )
 
 @info "deploydocs"
-# deploydocs()
+deploydocs(
+    repo = "github.com/piever/Recombinase.jl.git",
+)
