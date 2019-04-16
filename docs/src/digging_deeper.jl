@@ -44,3 +44,22 @@ res = discrete(prediction)(x, y)
 table(res)
 
 # ## OnlineStats integration
+
+# Summary statistics are computed using the excellent [OnlineStats](https://github.com/joshday/OnlineStats.jl)
+# package. First the data is split by the splitting variable (in this case `School`),
+# then the analysis is computed on each split chunk on the selected column(s).
+# Finally the results from different schools are put together in summary statistics
+# (default is `mean` and `s.e.m`):
+
+using Recombinase: datafolder, compute_summary
+data = loadtable(joinpath(datafolder, "school.csv"))
+compute_summary(density, data, :School; select = :MAch)
+
+# The computation of the summary statistic works in two steps. First statistics from the keyword
+# argument `estimator = (Mean, Variance)` of `compute_summary` are computed online,
+# then the function from a keyword argument `postprocess = (nobs, mean, var) -> (mean, sqrt(var / nobs))`
+# turn this statistics into values we plot (`mean` and `s.e.m`). `postprocess` needs to take one more
+# argument than the number of statistics of `estimator` (the number of observations, which is the first argument).
+# To compute a different error bar (for example just the standard deviation) you can simply do:
+
+compute_summary(density, data, :School; select = :MAch, postprocess = (nobs, mean, var) -> (mean, sqrt(var)))
