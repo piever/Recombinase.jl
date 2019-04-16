@@ -33,7 +33,7 @@ end
 compute_summary(keys::AbstractVector, cols::AbstractVector; kwargs...) = compute_summary(keys, (cols,); kwargs...)
 function compute_summary(keys::AbstractVector, cols::Tup; perm = sortperm(keys), min_nobs = 2, stat = summary)
     iter = (map(col -> fit!(copy(stat), view(col, idxs)), cols) for (_, idxs) in finduniquesorted(keys, perm))
-    collect_columns(map(getindex, vals) for vals in iter if all(t -> nobs(t) >= min_nobs, vals))
+    collect_columns(map(value, vals) for vals in iter if all(t -> nobs(t) >= min_nobs, vals))
 end
 
 compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::AbstractVector; kwargs...) =
