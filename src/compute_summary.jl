@@ -14,7 +14,7 @@ Base.string(::Automatic) = "automatic"
 struct MappedStat{T, C, S} <: OnlineStat{T}
     f::C
     stat::S
-    Summary(f::C, stat::OnlineStat{T}) where {C, T} =
+    MappedStat(f::C, stat::OnlineStat{T}) where {C, T} =
         new{T, C, typeof(stat)}(f, stat)
 end
 
