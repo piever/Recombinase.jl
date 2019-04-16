@@ -11,11 +11,9 @@ struct Automatic; end
 const automatic = Automatic()
 Base.string(::Automatic) = "automatic"
 
-struct MappedStat{T, C, S} <: OnlineStat{T}
+struct MappedStat{C, S}
     f::C
     stat::S
-    MappedStat(f::C, stat::OnlineStat{T}) where {C, T} =
-        new{T, C, typeof(stat)}(f, stat)
 end
 
 fit!(s::MappedStat, vec) = (fit!(s.stat, vec); s)

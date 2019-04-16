@@ -42,7 +42,7 @@ function fitvecmany!(m, iter)
     return m
 end
 
-function fitvec(stat::OnlineStat, iter, ranges=(); kwargs...)
+function fitvec(stat, iter, ranges=(); kwargs...)
     start = iterate(iter)
     start === nothing && error("Nothing to fit!")
     val, state = start
