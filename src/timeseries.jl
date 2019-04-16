@@ -18,15 +18,10 @@ end
 
 aroundindex(v, args...) = view(v, offsetrange(v, args...))
 
-isfinitevalue(::Missing) = false
-isfinitevalue(x::Number) = isfinite(x)
-
-function initstats(series, ranges; filter = isfinitevalue, transform = identity)
-    series = to_tuple(series)
+function initstats(stat, ranges)
     ranges = to_tuple(ranges)
     itr = Iterators.product(ranges...)
-    vec = [FTSeries((stat() for stat in series)...;
-            filter = filter, transform = identity) for _ in itr]
+    vec = [copy(stat) for _ in itr]
     return OffsetArray(vec, ranges)
 end
 
@@ -46,19 +41,12 @@ function fitvecmany!(m, iter)
     return m
 end
 
-to_namedtuple(s::NamedTuple) = s
-to_namedtuple(s) = to_namedtuple((s,))
-to_namedtuple(s::Tuple) = NamedTuple{map(Symbol, s)}(s)
-
-fitvec(series, iter, ranges=(); kwargs...) = fitvec(to_namedtuple(series), iter, ranges; kwargs...)
-
-function fitvec(series::NamedTuple{T}, iter, ranges=(); kwargs...) where T
+function fitvec(stat::OnlineStat, iter, ranges=(); kwargs...)
     start = iterate(iter)
     start === nothing && error("Nothing to fit!")
     val, state = start
-    init = initstats(series, _padded_tuple(axes, val, ranges); kwargs...)
+    init = initstats(stat, _padded_tuple(axes, val, ranges))
     fitvecmany!(init, Iterators.rest(iter, state))
-    s = StructArray(((nobs = nobs(el), value = NamedTuple{T}(value(el))) for el in init);
+    StructArray(((nobs = nobs(el), value = value(el)) for el in init);
         unwrap = t -> t <: Union{Tuple, NamedTuple})
-    StructArray(merge((nobs = s.nobs,), fieldarrays(s.value)))
 end

@@ -91,7 +91,7 @@ has_error(a::Analysis) = has_error(getfunction(a))
 has_error(a::Analysis, args...) = has_error(infer_axis(args...)(a))
 has_error(args...) = false
 
-function _expectedvalue(x, y; axis = nothing, min_nobs = 2, kwargs...)
+function _expectedvalue(x, y; axis = nothing, min_nobs = 2, stat = summary)
     itr = finduniquesorted(x)
     key_stat = ((key, fit!(Summary(; kwargs...), view(y, idxs))) for (key, idxs) in itr)
     return ((key, stat[]) for (key, stat) in key_stat if nobs(stat) >= min_nobs)
@@ -105,11 +105,11 @@ function _localregression(x, y; npoints = 100, axis = continuous_axis(x, y; npoi
     return ((val, predict(model, val)) for (ind, val) in enumerate(axis) if min < val < max)
 end
 
-function _alignedsummary(xs, ys; axis = vectorial_axis(xs, ys), min_nobs = 2, kwargs...)
+function _alignedsummary(xs, ys; axis = vectorial_axis(xs, ys), min_nobs = 2, stat = summary)
     iter = (view(y, x) for (x, y) in zip(xs, ys))
-    stats = OffsetArray([Summary(; kwargs...) for _ in axis], axis)
+    stats = OffsetArray([copy(stat) for _ in axis], axis)
     fitvecmany!(stats, iter)
-    ((val, stat[]) for (val, stat) in zip(axis, stats) if nobs(stat) >= min_nobs)
+    ((val, value(st)) for (val, st) in zip(axis, stats) if nobs(st) >= min_nobs)
 end
 
 has_error(::typeof(_alignedsummary)) = true

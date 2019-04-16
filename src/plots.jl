@@ -35,10 +35,10 @@ end
 series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
 function series2D(f, t::IndexedTable, g = Group();
-    select, error = automatic, ribbon = false, filter = isfinite, transform = identity,
-    estimator = (Mean, Variance), postprocess = _postprocess, min_nobs = 2, kwargs...)
+    select, error = automatic, ribbon = false, stat = _stat,
+    postprocess = _postprocess, min_nobs = 2, kwargs...)
 
-    summary_kwargs = (select=select, transform=transform, filter=filter, estimator=estimator, postprocess=postprocess)
+    summary_kwargs = (select=select, stat=stat, postprocess=postprocess)
 
     group = g.kwargs
     if isempty(group)
