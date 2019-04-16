@@ -1,0 +1,4 @@
+[deps]
+Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+OnlineStats = "a15396b6-48d5-5d58-9928-6d29437db91e"
+StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
