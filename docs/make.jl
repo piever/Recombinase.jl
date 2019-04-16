@@ -6,10 +6,12 @@ using Recombinase: compute_summary, discrete, density, hazard, cumulative, predi
 
 @info "makedocs"
 
-Literate.markdown(
-    joinpath(@__DIR__, "src", "tutorial.jl"),
-    joinpath(@__DIR__, "src", "generated")
-)
+for filename in ["tutorial.jl", "digging_deeper.jl"]
+    Literate.markdown(
+        joinpath(@__DIR__, "src", filename),
+        joinpath(@__DIR__, "src", "generated")
+    )
+end
 
 makedocs(
    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
@@ -18,6 +20,7 @@ makedocs(
         "index.md",
         "generated/tutorial.md",
         "interactive_interface.md",
+        "generated/digging_deeper.md",
    ]
 )
 
