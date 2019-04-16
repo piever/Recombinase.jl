@@ -60,7 +60,7 @@ compute_summary(density, data, :School; select = :MAch)
 using OnlineStats
 compute_summary(density, data, :School; select = :MAch, stat = Mean())
 
-# For more complex statistics, one can combine simple statistics using `FTSeries` from OnlineStats:
+# For more complex statistics, one can combine simple statistics using `Series` or `FTSeries` from OnlineStats:
 
 using OnlineStats
 compute_summary(density, data, :School; select = :MAch, stat = Series(Mean(), Variance()))
@@ -70,7 +70,7 @@ compute_summary(density, data, :School; select = :MAch, stat = Series(Mean(), Va
 # and its value and uses them to compute trend and error.
 # To compute a different error bar (for example just the standard deviation) you can simply do:
 
-using Recombinase: datafolder, compute_summary, MappedStat
+using Recombinase: MappedStat
 stats = Series(Mean(), Variance())
 postprocess(nobs, (mean, var)) = (mean, sqrt(var))
 compute_summary(density, data, :School; select = :MAch, stat = MappedStat(postprocess, stats))
