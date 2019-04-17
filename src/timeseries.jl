@@ -1,8 +1,14 @@
 using OffsetArrays: OffsetArray
 
+# replace first entries in a by b
 merge_tups(a::Tuple, b) = merge_tups(a, to_tuple(b)::Tuple)
 merge_tups(a::Tuple, ::Tuple{}) = a
 merge_tups(a::Tuple, b::Tuple) = (first(b), merge_tups(Base.tail(a), Base.tail(b))...)
+
+# only take first few entries of a so that result is as long as b
+cut_tup(a::Tuple, b) = cut_tup(a, to_tuple(b)::Tuple)
+cut_tup(a::Tuple, ::Tuple{}) = ()
+cut_tup(a::Tuple, b::Tuple) = (first(a), cut_tup(Base.tail(a), Base.tail(b))...)
 
 to_indexarray(t::Tuple{AbstractArray}) = t[1]
 to_indexarray(t::Tuple{AbstractArray, Vararg{AbstractArray}}) = CartesianIndices(t)
@@ -12,9 +18,10 @@ _view(a::AbstractArray{<:Any, N}, b::AbstractArray{<:Any, N}) where {N} = view(a
 
 offsetrange(v, offset, range=()) = offsetrange(v, to_tuple(offset)::Tuple, to_tuple(range)::Tuple)
 
-function offsetrange(v, offset::NTuple{O, Any}, range::NTuple{R, Any}=()) where {O, R}
-    padded_range = (range..., axes(v)[R+1:O]...)
-    rel_offset = map(axes(v)[1:O], offset, padded_range) do ax, off, r
+function offsetrange(v, offset::Tuple, range::Tuple=())
+    short_axes = cut_tup(axes(v), offset)
+    padded_range = merge_tups(short_axes, range)
+    rel_offset = map(short_axes, offset, padded_range) do ax, off, r
         - off + first(r) - first(ax)
     end
     OffsetArray(to_indexarray(padded_range), rel_offset)
@@ -44,15 +51,4 @@ function fitvecmany!(m, iter)
         fitvec!(m, el, shared)
     end
     return m
-end
-
-function fitvec(stats, iter, ranges; kwargs...)
-    stat, func = initstat(stats; kwargs...)
-    start = iterate(iter)
-    start === nothing && error("Nothing to fit!")
-    val, state = start
-    init = Recombinase.initstats(stat, merge_tups(axes(val), ranges))
-    fitvecmany!(init, Iterators.rest(iter, state))
-    StructArray(((nobs = nobs(el), value = func(el)) for el in init);
-        unwrap = t -> t <: Union{Tuple, NamedTuple})
 end
