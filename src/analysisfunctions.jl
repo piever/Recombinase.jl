@@ -89,12 +89,17 @@ function _localregression(x, y; npoints = 100, axis = continuous_axis(x, y; npoi
     return ((val, predict(model, val)) for (ind, val) in enumerate(axis) if min < val < max)
 end
 
-function _alignedsummary(xs, ys; axis = vectorial_axis(xs, ys), min_nobs = 2, stats = summary, kwargs...)
+function get_scale(v::AbstractArray)
+    m = metadata(v)
+    isnothing(m) ? 1 : get(m, :scale, 1)
+end
+
+function _alignedsummary(xs, ys; scale = get_scale(xs), axis = vectorial_axis(xs, ys), min_nobs = 2, stats = summary, kwargs...)
     stat, func = initstat(stats; kwargs...)
     iter = (view(y, x) for (x, y) in zip(xs, ys))
     stats = OffsetArray([copy(stat) for _ in axis], axis)
     fitvecmany!(stats, iter)
-    ((val, func(st)) for (val, st) in zip(axis, stats) if nobs(st) >= min_nobs)
+    ((val, scale*val, func(st)) for (val, st) in zip(axis, stats) if nobs(st) >= min_nobs)
 end
 
 has_error(::typeof(_alignedsummary)) = true

@@ -24,7 +24,7 @@ end
 
 function series2D(s::StructVector; ribbon = false)
     kwargs = Dict{Symbol, Any}()
-    xcols, ycols = map(columntuple, fieldarrays(s))
+    xcols, ycols = map(columntuple, fieldarrays(s)[end-1:end])
     x, y = xcols[1], ycols[1]
     yerr = ifelse(ribbon, :ribbon, :yerr)
     length(xcols) == 2 && (kwargs[:xerr] = xcols[2])

@@ -89,7 +89,10 @@ end
 
 compute_summary(::Nothing, args...; kwargs...) = compute_summary(args...; kwargs...)
 
-function compute_summary(t::IndexedTable, ::Automatic; select, kwargs...)
+compute_summary(t::IndexedTable, ::Automatic; select, kwargs...) =
+    compute_summary(t; select = select, kwargs...)
+
+function compute_summary(t::IndexedTable; select, kwargs...)
     rows(t, select)
 end
 
