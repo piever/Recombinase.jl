@@ -1,8 +1,8 @@
 using OffsetArrays: OffsetArray
 
-_padded_tuple(default, v::AbstractArray{T, N}, n::NTuple{N, Any}) where {T, N} = n
-_padded_tuple(default, v::AbstractArray{T, N}, n::Any) where {T, N} = _padded_tuple(default, v, (n,))
-_padded_tuple(default, v::AbstractArray{T, N}, n::Tuple) where {T, N} = Tuple(i <= length(n) ? n[i] : default(v, i) for i in 1:N)
+merge_tups(a::Tuple, b) = merge_tups(a, to_tuple(b)::Tuple)
+merge_tups(a::Tuple, ::Tuple{}) = a
+merge_tups(a::Tuple, b::Tuple) = (first(b), merge_tups(Base.tail(a), Base.tail(b))...)
 
 to_indexarray(t::Tuple{AbstractArray}) = t[1]
 to_indexarray(t::Tuple{AbstractArray, Vararg{AbstractArray}}) = CartesianIndices(t)
@@ -46,12 +46,13 @@ function fitvecmany!(m, iter)
     return m
 end
 
-function fitvec(stat, iter, ranges=(); kwargs...)
+function fitvec(stats, iter, ranges; kwargs...)
+    stat, func = initstat(stats; kwargs...)
     start = iterate(iter)
     start === nothing && error("Nothing to fit!")
     val, state = start
-    init = initstats(stat, _padded_tuple(axes, val, ranges))
+    init = Recombinase.initstats(stat, merge_tups(axes(val), ranges))
     fitvecmany!(init, Iterators.rest(iter, state))
-    StructArray(((nobs = nobs(el), value = value(el)) for el in init);
+    StructArray(((nobs = nobs(el), value = func(el)) for el in init);
         unwrap = t -> t <: Union{Tuple, NamedTuple})
 end
