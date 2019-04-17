@@ -1,12 +1,5 @@
 const Tup = Union{Tuple, NamedTuple}
 
-apply(f, val) = f(val)
-apply(::Nothing, val) = val
-apply(f::Type, val) = value(fit!(f(), val))
-apply(f::Tup, val) = map(t -> apply(t, val), f)
-apply(f::Analysis, cols::Tup) = compute_axis(f, cols...)(cols)
-apply(f::Analysis, t::IndexedTable; select = cols) = apply(f, columntuple(t, cols))
-
 struct Automatic; end
 const automatic = Automatic()
 Base.string(::Automatic) = "automatic"
