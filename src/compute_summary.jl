@@ -1,8 +1,5 @@
 const Tup = Union{Tuple, NamedTuple}
 
-_postprocess(nobs, mean, var, args...) = (mean, sqrt(var / nobs))
-_postprocess(nobs, mean) = (mean,)
-
 apply(f, val) = f(val)
 apply(::Nothing, val) = val
 apply(f::Type, val) = value(fit!(f(), val))
@@ -14,41 +11,41 @@ struct Automatic; end
 const automatic = Automatic()
 Base.string(::Automatic) = "automatic"
 
-struct Summary{S<:FTSeries, C}
-    ftseries::S
-    postprocess::C
+struct MappedStat{C, S}
+    f::C
+    stat::S
 end
 
-function Summary(; transform = identity, filter = isfinitevalue,
-    postprocess = _postprocess, estimator = (Mean, Variance))
-    return Summary(FTSeries((stat() for stat in to_tuple(estimator))...;
-        filter = filter, transform = transform), postprocess)
-end
+fit!(s::MappedStat, vec) = (fit!(s.stat, vec); s)
+nobs(s::MappedStat) = nobs(s.stat)
+value(s::MappedStat) = s.f(nobs(s), value(s.stat))
+Base.copy(s::MappedStat) = MappedStat(s.f, copy(s.stat))
 
-fit!(s::Summary, vec) = (fit!(s.ftseries, vec); s)
-nobs(s::Summary) = nobs(s.ftseries)
-Base.getindex(s::Summary) = s.postprocess(nobs(s.ftseries), value(s.ftseries)...)
+isfinitevalue(::Missing) = false
+isfinitevalue(x::Number) = isfinite(x)
+
+const summary = MappedStat(FTSeries(Mean(), Variance(), filter = isfinitevalue)) do nobs, (mean, var)
+    (mean, sqrt(var / nobs))
+end
 
 compute_summary(keys::AbstractVector, cols::AbstractVector; kwargs...) = compute_summary(keys, (cols,); kwargs...)
-function compute_summary(keys::AbstractVector, cols::Tup; perm = sortperm(keys), min_nobs = 2, kwargs...)
-    iter = (map(col -> fit!(Summary(; kwargs...), view(col, idxs)), cols) for (_, idxs) in finduniquesorted(keys, perm))
-    collect_columns(map(getindex, vals) for vals in iter if all(t -> nobs(t) >= min_nobs, vals))
+function compute_summary(keys::AbstractVector, cols::Tup; perm = sortperm(keys), min_nobs = 2, stat = summary)
+    iter = (map(col -> fit!(copy(stat), view(col, idxs)), cols) for (_, idxs) in finduniquesorted(keys, perm))
+    collect_columns(map(value, vals) for vals in iter if all(t -> nobs(t) >= min_nobs, vals))
 end
 
 compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::AbstractVector; kwargs...) =
     compute_summary(f, keys, (cols,); kwargs...)
 
 function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup;
-    min_nobs = 2, perm = sortperm(keys), kwargs...)
+    min_nobs = 2, perm = sortperm(keys), stat = summary)
 
     analysis = compute_axis(f, cols...)
     axis = get_axis(analysis)
-    summaries = [Summary(; kwargs...) for _ in axis]
+    summaries = [copy(stat) for _ in axis]
     data = StructVector(cols)
     _compute_summary!(axis, summaries, analysis, keys, perm, data)
-    summary = collect_columns(s[] for s in summaries)
-    mask = findall(t -> nobs(t) >= min_nobs, summaries)
-    return StructArray((axis[mask], summary[mask]))
+    return collect_columns((ax, value(s)) for (ax, s) in zip(axis, summaries) if nobs(s) >= min_nobs)
 end
 
 function _compute_summary!(axis, summaries, analysis, keys, perm, data)

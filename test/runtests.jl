@@ -15,7 +15,7 @@ using OnlineStatsBase
         discrete(prediction)(min_nobs = 1),
         across,
         (x, y),
-        estimator = Mean
+        stat = Mean()
     )
     xcol, ycol = fieldarrays(res)
     @test xcol == [1, 2, 3]
@@ -24,7 +24,7 @@ using OnlineStatsBase
         discrete(density),
         across,
         (x,),
-        estimator = Mean
+        stat = Mean()
     )
     xcol, ycol = fieldarrays(res)
     @test xcol == [1, 2, 3]
@@ -37,20 +37,20 @@ end
     traces = [v1, v1, v1, v2, v2, v2]
     ts = [10, 501, 733, 1, 20, 30]
     trims = [7:13, 498:504, 730:736, 1:4, 17:23, 27:33]
-    stats = (mean = Mean, variance = Variance)
+    stats = Series(mean = Mean(), variance = Variance())
     s = fitvec(stats, (aroundindex(trace, t) for (trace, t) in zip(traces, ts)), -5:5);
     @test axes(s) == (-5:5,)
     @test s[-3].nobs == 4
-    @test s[-3] isa NamedTuple{(:nobs, :mean, :variance)}
+    @test s[-3].value isa NamedTuple{(:mean, :variance)}
     s = fitvec(stats, (aroundindex(trace, t, trim) for (trace, t, trim) in zip(traces, ts, trims)), -5:5);
     @test axes(s) == (-5:5,)
     @test s[-3].nobs == 4
-    @test s[-3] isa NamedTuple{(:nobs, :mean, :variance)}
+    @test s[-3].value isa NamedTuple{(:mean, :variance)}
     @test s[-4].nobs == 0
 
-    stats = Mean
+    stats = Mean()
     s = fitvec(stats, (aroundindex(trace, t) for (trace, t) in zip(traces, ts)), -5:5);
     @test axes(s) == (-5:5,)
     @test s[-3].nobs == 4
-    @test s[-3].Mean isa Float64
+    @test s[-3].value isa Float64
 end

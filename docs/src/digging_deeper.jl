@@ -55,11 +55,22 @@ using Recombinase: datafolder, compute_summary
 data = loadtable(joinpath(datafolder, "school.csv"))
 compute_summary(density, data, :School; select = :MAch)
 
-# The computation of the summary statistic works in two steps. First statistics from the keyword
-# argument `estimator = (Mean, Variance)` of `compute_summary` are computed online,
-# then the function from a keyword argument `postprocess = (nobs, mean, var) -> (mean, sqrt(var / nobs))`
-# turn this statistics into values we plot (`mean` and `s.e.m`). `postprocess` needs to take one more
-# argument than the number of statistics of `estimator` (the number of observations, which is the first argument).
+# Any summary statistic can be used. If we only want the mean we can use
+
+using OnlineStats
+compute_summary(density, data, :School; select = :MAch, stat = Mean())
+
+# For more complex statistics, one can combine simple statistics using `Series` or `FTSeries` from OnlineStats:
+
+using OnlineStats
+compute_summary(density, data, :School; select = :MAch, stat = Series(Mean(), Variance()))
+
+# Recombinase provided a `MappedStat` type to apply a function to turn the result of the summary statistics
+# into values we plot. `MappedStat` needs a function that can take the number of observations of an `OnlineStat`
+# and its value and uses them to compute trend and error.
 # To compute a different error bar (for example just the standard deviation) you can simply do:
 
-compute_summary(density, data, :School; select = :MAch, postprocess = (nobs, mean, var) -> (mean, sqrt(var)))
+using Recombinase: MappedStat
+stats = Series(Mean(), Variance())
+postprocess(nobs, (mean, var)) = (mean, sqrt(var))
+compute_summary(density, data, :School; select = :MAch, stat = MappedStat(postprocess, stats))
