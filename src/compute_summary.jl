@@ -4,22 +4,23 @@ struct Automatic; end
 const automatic = Automatic()
 Base.string(::Automatic) = "automatic"
 
-struct MappedStat{C, S}
+struct MappedStat{T, C, S} <: OnlineStat{T}
     f::C
     stat::S
+    MappedStat(f::C, stat::OnlineStat{T}) where {C, T} =
+        new{T, C, typeof(stat)}(f, stat)
 end
 
-fit!(s::MappedStat, vec) = (fit!(s.stat, vec); s)
+_fit!(s::MappedStat, vec) = _fit!(s.stat, vec)
+_merge!(s1::MappedStat, s2::MappedStat) = _merge!(s1.stat, s2.stat)
 nobs(s::MappedStat) = nobs(s.stat)
-value(s::MappedStat) = s.f(nobs(s), value(s.stat))
+value(s::MappedStat) = s.f(s.stat)
 Base.copy(s::MappedStat) = MappedStat(s.f, copy(s.stat))
 
 isfinitevalue(::Missing) = false
 isfinitevalue(x::Number) = isfinite(x)
 
-const summary = MappedStat(FTSeries(Mean(), Variance(), filter = isfinitevalue)) do nobs, (mean, var)
-    (mean, sqrt(var / nobs))
-end
+const summary = FTSeries(Mean(), MappedStat(t -> sqrt(value(t)/nobs(t)), Variance()))
 
 compute_summary(keys::AbstractVector, cols::AbstractVector; kwargs...) = compute_summary(keys, (cols,); kwargs...)
 function compute_summary(keys::AbstractVector, cols::Tup; perm = sortperm(keys), min_nobs = 2, stat = summary)
