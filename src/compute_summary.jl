@@ -5,9 +5,9 @@ const automatic = Automatic()
 Base.string(::Automatic) = "automatic"
 
 apply(f, val) = f(val)
-apply(f::Tuple, val::Tuple) = map(apply, f, val)
-apply(f::Function, val::Tuple) = map(f, val)
-_all(f::Function, tup::Tuple) = all(f, tup)
+apply(f::Tup, val::Tup) = map(apply, f, val)
+apply(f::Function, val::Tup) = map(f, val)
+_all(f::Function, tup::Tup) = all(f, tup)
 _all(f::Function, t) = f(t)
 
 isfinitevalue(::Missing) = false
@@ -34,8 +34,8 @@ const summary = (Mean(), Variance() => t -> sqrt(value(t)/nobs(t)))
 function lazy_summary(keys::AbstractVector, cols; perm = sortperm(keys), min_nobs = 2, stats = summary, kwargs...)
     stat, func = initstat(stats; kwargs...)
     function process(idxs)
-        init = copy(stat)
         apply(cols) do col
+            init = copy(stat)
             for i in idxs
                 val = col[perm[i]]
                 fit!(init, val)

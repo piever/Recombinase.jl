@@ -58,18 +58,16 @@ compute_summary(density, data, :School; select = :MAch)
 # Any summary statistic can be used. If we only want the mean we can use
 
 using OnlineStats
-compute_summary(density, data, :School; select = :MAch, stat = Mean())
+compute_summary(density, data, :School; select = :MAch, stats = Mean())
 
 # We can also pass a `Tuple` of statistics to compute many at the same time:
 
 using OnlineStats
-compute_summary(density, data, :School; select = :MAch, stat = Series(Mean(), Variance()))
+compute_summary(density, data, :School; select = :MAch, stats = Series(Mean(), Variance()))
 
-# Recombinase provided a `MappedStat` type to apply a function to turn the result of the summary statistics
-# into values we plot. `MappedStat` needs a function that can take the number of observations of an `OnlineStat`
-# and its value and uses them to compute trend and error.
+# One can optionally pass pairs of `OnlineStat` and function to apply the function to the
+# `OnlineStat` before plotting (default is just taking the `value`).
 # To compute a different error bar (for example just the standard deviation) you can simply do:
 
-using Recombinase: MappedStat
-stats = (Mean(), MappedStat(t -> sqrt(value(t)), Variance()))
+stats = (Mean(), Variance() => t -> sqrt(value(t)))
 compute_summary(density, data, :School; select = :MAch, stats = stats)
