@@ -5,15 +5,14 @@ using Statistics
 using StatsBase: countmap, ecdf, sem
 using Loess: loess, predict
 using KernelDensity: pdf, kde, InterpKDE
-using StructArrays: StructVector, StructArray, finduniquesorted, uniquesorted, fieldarrays
+using StructArrays: StructVector, StructArray, finduniquesorted, uniquesorted, fieldarrays, GroupPerm
 using IndexedTables: collect_columns, collect_columns_flattened, rows, columns, IndexedTable, colnames, pushcol
 import IndexedTables: sortpermby
 using ColorTypes: RGB
 import Widgets, Observables
 using Widgets: Widget, dropdown, toggle, button
 using OrderedCollections: OrderedDict
-using OnlineStatsBase: Mean, Variance, FTSeries, fit!, OnlineStat
-import OnlineStatsBase: _fit!, _merge!, nobs, value
+using OnlineStatsBase: Mean, Variance, FTSeries, fit!, OnlineStat, nobs, value
 
 datafolder = joinpath(@__DIR__, "..", "data")
 
