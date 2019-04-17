@@ -1,7 +1,7 @@
 using Statistics, StatsBase
 using StructArrays
 using Recombinase
-using Recombinase: compute_summary, fitvec, aroundindex, discrete,
+using Recombinase: compute_summary, aroundindex, discrete,
     prediction, density
 using Test
 using IndexedTables
@@ -31,6 +31,17 @@ using OnlineStatsBase
     @test map(Recombinase._first, ycol) ≈ [1, 1, 1]./3
 end
 
+# example function to test initstats and fitvecmany!
+function fitvec(stats, iter, ranges)
+    start = iterate(iter)
+    start === nothing && error("Nothing to fit!")
+    val, state = start
+    init = Recombinase.initstats(stats, Recombinase.merge_tups(axes(val), ranges))
+    Recombinase.fitvecmany!(init, Iterators.rest(iter, state))
+    StructArray(((nobs = nobs(el), value = value(el)) for el in init);
+        unwrap = t -> t <: Union{Tuple, NamedTuple})
+end
+
 @testset "timeseries" begin
     v1 = rand(1000) # day 1
     v2 = rand(50) # day 2
@@ -53,4 +64,8 @@ end
     @test axes(s) == (-5:5,)
     @test s[-3].nobs == 4
     @test s[-3].value isa Float64
+
+    g() = aroundindex(rand(4, 4, 4), (2, 2), (1:3, 1:3))
+    @inferred g()
+    @test axes(g()) == (-1:1, -1:1, 1:4)
 end
