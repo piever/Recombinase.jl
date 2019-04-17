@@ -103,11 +103,14 @@ function compute_summary(f::FunctionOrAnalysis, t::IndexedTable, keys; select, k
     compute_summary(f, keys, columntuple(t, select); perm=perm, kwargs...)
 end
 
-function compute_summary(f::FunctionOrAnalysis, t::IndexedTable, ::Automatic; select, kwargs...)
+function compute_summary(f::FunctionOrAnalysis, t::IndexedTable; select, kwargs...)
     args = columntuple(t, select)
     has_error(f, args...) && (f = f(; kwargs...))
     collect_columns(f(args...))
 end
+
+compute_summary(f::FunctionOrAnalysis, t::IndexedTable, ::Automatic; select, kwargs...) =
+    compute_summary(f, t; select=select, kwargs...)
 
 tupleofarrays(s::Tup) = Tuple(s)
 tupleofarrays(s::StructVector) = Tuple(fieldarrays(s))

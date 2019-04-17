@@ -14,6 +14,7 @@ getfunction(funcs::NamedTuple, S::Symbol) = getfield(funcs, S)
 getfunction(a::Analysis{S}) where {S} = getfunction(a.f, S)
 
 (a::Analysis{S})(; kwargs...) where {S} = Analysis{S}(a; kwargs...)
+(a::Analysis{:automatic})(; kwargs...) = Analysis{:automatic}(a; kwargs...)
 (a::Analysis{S})(args...) where {S} = getfunction(a)(args...; a.kwargs...)
 (a::Analysis{:automatic})(args...) = (infer_axis(args...)(a))(args...)
 
@@ -66,7 +67,7 @@ function compute_axis(a::Analysis{:discrete}, args...)
     end
 end
 
-vectorial_axis(x, args...) = axes(x, 1)
+vectorial_axis(x, args...) = axes(x[1], 1)
 
 function compute_axis(a::Analysis{:vectorial}, args...)
     set(a, :axis) do
