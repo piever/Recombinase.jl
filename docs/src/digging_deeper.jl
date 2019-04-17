@@ -71,6 +71,5 @@ compute_summary(density, data, :School; select = :MAch, stat = Series(Mean(), Va
 # To compute a different error bar (for example just the standard deviation) you can simply do:
 
 using Recombinase: MappedStat
-stats = Series(Mean(), Variance())
-postprocess(nobs, (mean, var)) = (mean, sqrt(var))
-compute_summary(density, data, :School; select = :MAch, stat = MappedStat(postprocess, stats))
+stat = Series(Mean(), MappedStat(t -> sqrt(value(t)), Variance()))
+compute_summary(density, data, :School; select = :MAch, stat = stat)
