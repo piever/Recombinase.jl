@@ -35,7 +35,7 @@ end
 series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
 function series2D(f, t::IndexedTable, g = Group(); select,
-    error = automatic, ribbon = false, stat = summary, min_nobs = 2, kwargs...)
+    error = automatic, ribbon=false, stats=summary, filter=isfinitevalue, transform=identity, min_nobs=2, kwargs...)
 
     group = g.kwargs
     if isempty(group)
@@ -46,7 +46,16 @@ function series2D(f, t::IndexedTable, g = Group(); select,
         itr = finduniquesorted(rows(t, by), perm)
     end
     data = collect_columns_flattened(
-        key => compute_summary(f, view(t, idxs), error; min_nobs=min_nobs, select=select, stat=stat) for (key, idxs) in itr
+        key => compute_summary(
+            f,
+            view(t, idxs),
+            error;
+            min_nobs=min_nobs,
+            select=select,
+            stats=stats,
+            filter=filter,
+            transform=transform,
+        ) for (key, idxs) in itr
     )
     plot_args, plot_kwargs = series2D(data.second; ribbon = ribbon)
     plot_kwargs[:group] = columns(data.first)

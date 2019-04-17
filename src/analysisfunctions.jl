@@ -74,28 +74,11 @@ function compute_axis(a::Analysis{:vectorial}, args...)
     end
 end
 
-_first(t) = t
-_first(t::Union{Tuple, NamedTuple}) = first(t)
-
-function fititer!(axis, summaries, iter)
-    lo, hi = extrema(axes(axis, 1))
-    for (key, val) in iter
-        ind = searchsortedfirst(axis, key, lo, hi, Base.Order.Forward)
-        lo = ind + 1
-        ind > hi && break
-        fit!(summaries[ind], _first(val))
-    end
-end
-
 has_error(a::Analysis) = has_error(getfunction(a))
 has_error(a::Analysis, args...) = has_error(infer_axis(args...)(a))
 has_error(args...) = false
 
-function _expectedvalue(x, y; axis = nothing, min_nobs = 2, stat = summary)
-    itr = finduniquesorted(x)
-    key_stat = ((key, fit!(copy(stat), view(y, idxs))) for (key, idxs) in itr)
-    return ((key, value(stat)) for (key, stat) in key_stat if nobs(stat) >= min_nobs)
-end
+_expectedvalue(x, y; axis = nothing, kwargs...) = lazy_summary(x, y; kwargs...)
 
 has_error(::typeof(_expectedvalue)) = true
 
@@ -105,11 +88,12 @@ function _localregression(x, y; npoints = 100, axis = continuous_axis(x, y; npoi
     return ((val, predict(model, val)) for (ind, val) in enumerate(axis) if min < val < max)
 end
 
-function _alignedsummary(xs, ys; axis = vectorial_axis(xs, ys), min_nobs = 2, stat = summary)
+function _alignedsummary(xs, ys; axis = vectorial_axis(xs, ys), min_nobs = 2, stats = summary, kwargs...)
+    stat, func = initstat(stats; kwargs...)
     iter = (view(y, x) for (x, y) in zip(xs, ys))
     stats = OffsetArray([copy(stat) for _ in axis], axis)
     fitvecmany!(stats, iter)
-    ((val, value(st)) for (val, st) in zip(axis, stats) if nobs(st) >= min_nobs)
+    ((val, func(st)) for (val, st) in zip(axis, stats) if nobs(st) >= min_nobs)
 end
 
 has_error(::typeof(_alignedsummary)) = true
