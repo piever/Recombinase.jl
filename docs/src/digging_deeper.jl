@@ -60,7 +60,7 @@ compute_summary(density, data, :School; select = :MAch)
 using OnlineStats
 compute_summary(density, data, :School; select = :MAch, stat = Mean())
 
-# For more complex statistics, one can combine simple statistics using `Series` or `FTSeries` from OnlineStats:
+# We can also pass a `Tuple` of statistics to compute many at the same time:
 
 using OnlineStats
 compute_summary(density, data, :School; select = :MAch, stat = Series(Mean(), Variance()))
@@ -71,5 +71,5 @@ compute_summary(density, data, :School; select = :MAch, stat = Series(Mean(), Va
 # To compute a different error bar (for example just the standard deviation) you can simply do:
 
 using Recombinase: MappedStat
-stat = Series(Mean(), MappedStat(t -> sqrt(value(t)), Variance()))
-compute_summary(density, data, :School; select = :MAch, stat = stat)
+stats = (Mean(), MappedStat(t -> sqrt(value(t)), Variance()))
+compute_summary(density, data, :School; select = :MAch, stats = stats)

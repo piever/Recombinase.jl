@@ -19,7 +19,7 @@ statpost(sp::Pair{<:OnlineStat}) = sp
 initstat(m::OnlineStat; kwargs...) = initstat(m => value; kwargs...)
 function initstat(sp::Pair{<:OnlineStat}; filter = isfinitevalue, transform = identity)
     stat, func = sp
-    FTSeries(stat; filter = filter, transform = transform) => t -> func(first(t.stat))
+    FTSeries(stat; filter = filter, transform = transform) => t -> func(first(t.stats))
 end
 
 function initstat(stats::Tuple; filter = isfinitevalue, transform = identity)
@@ -43,12 +43,14 @@ function lazy_summary(keys::AbstractVector, cols; perm = sortperm(keys), min_nob
             return init
         end
     end
-    iter = (process(idxs) for idxs in GroupPerm(keys, perm))
-    return (apply(func, vals) for vals in iter if _all(t -> nobs(t) >= min_nobs, vals))
+    iter = (keys[perm[first(idxs)]] => process(idxs) for idxs in GroupPerm(keys, perm))
+    return (key => apply(func, vals) for (key, vals) in iter if _all(t -> nobs(t) >= min_nobs, vals))
 end
 
 compute_summary(keys::AbstractVector, cols::AbstractVector; kwargs...) = compute_summary(keys, (cols,); kwargs...)
-compute_summary(keys::AbstractVector, cols::Tup; kwargs...) = collect_columns(lazy_summary(keys, cols; kwargs...))
+function compute_summary(keys::AbstractVector, cols::Tup; kwargs...)
+    collect_columns(val for (_, val) in lazy_summary(keys, cols; kwargs...))
+end
 
 compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::AbstractVector; kwargs...) =
     compute_summary(f, keys, (cols,); kwargs...)
@@ -80,7 +82,8 @@ end
 
 function _compute_summary!(axis, summaries, analysis, keys, perm, data)
     for (_, idxs) in finduniquesorted(keys, perm)
-        fititer!(axis, summaries, analysis(tupleofarrays(view(data, idxs))...))
+        res = analysis(tupleofarrays(view(data, idxs))...)
+        fititer!(axis, summaries, res)
     end
 end
 
