@@ -120,4 +120,23 @@ groupedbar(args...; kwargs...)
 
 # ### Axis style selection
 #
-# Analysis try to infer the axis type (continuous if the variable is numeric, categorical otherwise). If that is not appropriate for your data you can use `discrete(prediction)` or `continuous(prediction)` (works for `hazard`, `density` and `cumulative` as well).
+# Analyses try to infer the axis type (continuous if the variable is numeric, categorical otherwise). If that is not appropriate for your data you can use `discrete(prediction)` or `continuous(prediction)` (works for `hazard`, `density` and `cumulative` as well).
+# A special type of axis type is vectorial: the `x` and `y` axes can be contain `AbstractArray` elements, in which case
+# we take views of elements of `y` corresponding to elements of `x`. This can be useful to compute averages of time varying signals.
+
+using Recombinase: offsetrange
+signal = sin.(range(0, 10π, length = 1000)) .+ 0.1 .* rand.()
+events = range(50, 950, step = 100)
+z = repeat([true, false], outer = 5)
+x = [offsetrange(signal, ev) for ev in events]
+y = fill(signal, length(x))
+t = table(x, y, z, names = [:offsets, :signals, :peak])
+
+args, kwargs = series2D(
+    prediction(axis = -60:60),
+    t,
+    Group(:peak),
+    select = (:offsets, :signals),
+    ribbon = true,
+)
+plot(args...; kwargs...)
