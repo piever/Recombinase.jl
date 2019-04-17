@@ -34,7 +34,7 @@ args, kwargs = series2D(
     )
 scatter(args...; kwargs...)
 
-# By default, this computes the mean and standard error, we can pass `estimator = Mean` to only compute the mean.
+# By default, this computes the mean and standard error, we can pass `stat = Mean()` to only compute the mean.
 #
 # ### Splitting by many variables
 #
@@ -46,7 +46,7 @@ args, kwargs = series2D(
     Group(color = :Sx, markershape = :Sector),
     error = :School,
     select = (:MAch, :SSS),
-    estimator = Mean,
+    stat = Mean(),
     )
 scatter(args...; kwargs...)
 
@@ -60,7 +60,7 @@ args, kwargs = series2D(
     Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
-    estimator = Mean,
+    stat = Mean(),
     color = [:red, :blue]
     )
 scatter(args...; kwargs...)
@@ -73,7 +73,7 @@ args, kwargs = series2D(
     Group(:Sx),
     error = :School,
     select = (:MAch, :SSS),
-    estimator = Mean,
+    stat = Mean(),
     )
 scatter(args...; legend = :topleft, markersize = 10, kwargs...)
 

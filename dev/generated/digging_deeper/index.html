@@ -3,56 +3,56 @@
 x = randn(100)
 res = density(x)
 collect(Iterators.take(res, 5)) # let&#39;s see the first few elements</code></pre><pre><code class="language-none">5-element Array{Tuple{Float64,Float64},1}:
- (-2.9585308372146755, 0.024965004165463458)
- (-2.899551728000507, 0.026180556259019484) 
- (-2.8405726187863385, 0.026736443188934568)
- (-2.78159350957217, 0.026710766176206113)  
- (-2.722614400358002, 0.02627803730807635)  </code></pre><p>We can collect the iterator in a table container to see that we recover the <code>x</code> and <code>y</code> axis, ready for plotting</p><pre><code class="language-julia">using JuliaDB
+ (-2.4902093839917225, 0.03526912280447363)
+ (-2.440726647792043, 0.038422543278945516)
+ (-2.391243911592363, 0.041685494518715636)
+ (-2.3417611753926835, 0.04511651127566592)
+ (-2.292278439193004, 0.048787310578749334)</code></pre><p>We can collect the iterator in a table container to see that we recover the <code>x</code> and <code>y</code> axis, ready for plotting</p><pre><code class="language-julia">using JuliaDB
 s = table(res)</code></pre><pre><code class="language-none">Table with 100 rows, 2 columns:
 1         2
 ───────────────────
--2.95853  0.024965
--2.89955  0.0261806
--2.84057  0.0267364
--2.78159  0.0267108
--2.72261  0.026278
--2.66364  0.0256878
--2.60466  0.0252298
--2.54568  0.0251928
--2.4867   0.0258246
+-2.49021  0.0352691
+-2.44073  0.0384225
+-2.39124  0.0416855
+-2.34176  0.0451165
+-2.29228  0.0487873
+-2.2428   0.0527768
+-2.19331  0.0571639
+-2.14383  0.0620201
+-2.09435  0.0674023
 ⋮
-2.46755   0.0250348
-2.52653   0.0242304
-2.58551   0.0236838
-2.64448   0.0231943
-2.70346   0.0225994
-2.76244   0.0217824
-2.82142   0.0206744
-2.8804    0.0192533</code></pre><p><code>prediction</code> is similar but requrires two arguments:</p><pre><code class="language-julia">xs = 10 .* rand(100)
+2.0622    0.0370923
+2.11169   0.0331753
+2.16117   0.0297909
+2.21065   0.026862
+2.26013   0.0243113
+2.30962   0.0220647
+2.3591    0.0200546
+2.40858   0.0182221</code></pre><p><code>prediction</code> is similar but requrires two arguments:</p><pre><code class="language-julia">xs = 10 .* rand(100)
 ys = sin.(xs) .+ 0.5 .* rand(100)
 
 res = prediction(xs, ys)
 table(res)</code></pre><pre><code class="language-none">Table with 98 rows, 2 columns:
 1         2
 ────────────────────
-0.140691  0.673024
-0.241051  0.705249
-0.34141   0.733018
-0.44177   0.756253
-0.54213   0.775178
-0.642489  0.789877
-0.742849  0.800405
-0.843208  0.807207
-0.943568  0.810384
+0.107376  0.657804
+0.207592  0.697983
+0.307808  0.733183
+0.408024  0.763697
+0.508239  0.7895
+0.608455  0.810849
+0.708671  0.827757
+0.808887  0.840478
+0.909102  0.849051
 ⋮
-9.17306   0.565143
-9.27342   0.472203
-9.37377   0.372356
-9.47413   0.26561
-9.57449   0.152067
-9.67485   0.0318063
-9.77521   -0.0952482
-9.87557   -0.229104</code></pre><p>The function <code>discrete</code> can turn any analysis into its discrete counter-part (analyses are continuous for numerical axes and discrete otherwise by default). It also automatically comutes the error of the prediction (s.e.m).</p><pre><code class="language-julia">using Recombinase: discrete
+9.12679   0.59224
+9.22701   0.517032
+9.32723   0.435095
+9.42744   0.346448
+9.52766   0.251005
+9.62787   0.14867
+9.72809   0.0395902
+9.8283    -0.0763603</code></pre><p>The function <code>discrete</code> can turn any analysis into its discrete counter-part (analyses are continuous for numerical axes and discrete otherwise by default). It also automatically comutes the error of the prediction (s.e.m).</p><pre><code class="language-julia">using Recombinase: discrete
 
 x = rand(1:3, 1000)
 y = rand(1000) .+ 0.1 .* x
@@ -61,48 +61,93 @@ res = discrete(prediction)(x, y)
 table(res)</code></pre><pre><code class="language-none">Table with 3 rows, 2 columns:
 1  2
 ────────────────────────
-1  (0.581739, 0.0146647)
-2  (0.694483, 0.0163167)
-3  (0.818481, 0.0157399)</code></pre><h2><a class="nav-anchor" id="OnlineStats-integration-1" href="#OnlineStats-integration-1">OnlineStats integration</a></h2><p>Summary statistics are computed using the excellent <a href="https://github.com/joshday/OnlineStats.jl">OnlineStats</a> package. First the data is split by the splitting variable (in this case <code>School</code>), then the analysis is computed on each split chunk on the selected column(s). Finally the results from different schools are put together in summary statistics (default is <code>mean</code> and <code>s.e.m</code>):</p><pre><code class="language-julia">using Recombinase: datafolder, compute_summary
+1  (0.595172, 0.0161827)
+2  (0.692099, 0.0153677)
+3  (0.778255, 0.0158424)</code></pre><h2><a class="nav-anchor" id="OnlineStats-integration-1" href="#OnlineStats-integration-1">OnlineStats integration</a></h2><p>Summary statistics are computed using the excellent <a href="https://github.com/joshday/OnlineStats.jl">OnlineStats</a> package. First the data is split by the splitting variable (in this case <code>School</code>), then the analysis is computed on each split chunk on the selected column(s). Finally the results from different schools are put together in summary statistics (default is <code>mean</code> and <code>s.e.m</code>):</p><pre><code class="language-julia">using Recombinase: datafolder, compute_summary
 data = loadtable(joinpath(datafolder, &quot;school.csv&quot;))
 compute_summary(density, data, :School; select = :MAch)</code></pre><pre><code class="language-none">100-element StructArrays.StructArray{Tuple{Float64,Tuple{Float64,Float64}},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},StructArrays.StructArray{Tuple{Float64,Float64},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},Array{Float64,1}}}}}}}:
- (-2.832, (0.007095095625459628, 0.0005825497483108032))             
+ (-2.832, (0.007095095625459628, 0.0005825497483108033))             
  (-2.550939393939394, (0.007838324051760595, 0.0006260574836083454)) 
- (-2.269878787878788, (0.008619592372159876, 0.0006696627630044319)) 
- (-1.9888181818181818, (0.009438313664963307, 0.0007134192242440505))
+ (-2.269878787878788, (0.008619592372159873, 0.0006696627630044318)) 
+ (-1.9888181818181818, (0.00943831366496331, 0.0007134192242440502)) 
  (-1.7077575757575758, (0.010293824814249444, 0.0007574849542421938))
- (-1.4266969696969698, (0.011185676423288606, 0.0008020675411028164))
- (-1.1456363636363636, (0.01211335769099234, 0.0008474013402249302)) 
+ (-1.4266969696969698, (0.011185676423288608, 0.0008020675411028164))
+ (-1.1456363636363636, (0.012113357690992341, 0.0008474013402249303))
  (-0.8645757575757576, (0.01307621450967119, 0.0008936976283633891)) 
  (-0.5835151515151515, (0.014073305125439826, 0.0009410934724699248))
- (-0.3024545454545455, (0.015103285160103232, 0.000989599947597033)) 
+ (-0.3024545454545455, (0.015103285160103229, 0.0009895999475970328))
  ⋮                                                                   
- (22.744515151515152, (0.030139050666702846, 0.0014970627285730306)) 
- (23.02557575757576, (0.028632688481218565, 0.0014533685239022608))  
- (23.306636363636365, (0.02704926915097793, 0.0014012627830656734))  
- (23.58769696969697, (0.025399256774123875, 0.001340841300777614))   
+ (22.744515151515152, (0.030139050666702843, 0.0014970627285730306)) 
+ (23.02557575757576, (0.02863268848121857, 0.001453368523902261))    
+ (23.306636363636365, (0.02704926915097793, 0.0014012627830656736))  
+ (23.58769696969697, (0.025399256774123878, 0.001340841300777614))   
  (23.868757575757577, (0.023696502599550594, 0.0012724899216037388)) 
- (24.149818181818183, (0.02195754966684903, 0.0011970079579388833))  
- (24.43087878787879, (0.02020131354820369, 0.0011156135636389236))   
+ (24.149818181818183, (0.021957549666849027, 0.0011970079579388833)) 
+ (24.43087878787879, (0.020201313548203686, 0.0011156135636389238))  
  (24.711939393939392, (0.018448259380673813, 0.0010299231340946513)) 
- (24.993, (0.016719486604897808, 0.0009418573882592296))             </code></pre><p>The computation of the summary statistic works in two steps. First statistics from the keyword argument <code>estimator = (Mean, Variance)</code> of <code>compute_summary</code> are computed online, then the function from a keyword argument <code>postprocess = (nobs, mean, var) -&gt; (mean, sqrt(var / nobs))</code> turn this statistics into values we plot (<code>mean</code> and <code>s.e.m</code>). <code>postprocess</code> needs to take one more argument than the number of statistics of <code>estimator</code> (the number of observations, which is the first argument). To compute a different error bar (for example just the standard deviation) you can simply do:</p><pre><code class="language-julia">compute_summary(density, data, :School; select = :MAch, postprocess = (nobs, mean, var) -&gt; (mean, sqrt(var)))</code></pre><pre><code class="language-none">100-element StructArrays.StructArray{Tuple{Float64,Tuple{Float64,Float64}},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},StructArrays.StructArray{Tuple{Float64,Float64},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},Array{Float64,1}}}}}}}:
+ (24.993, (0.016719486604897804, 0.0009418573882592297))             </code></pre><p>Any summary statistic can be used. If we only want the mean we can use</p><pre><code class="language-julia">using OnlineStats
+compute_summary(density, data, :School; select = :MAch, stat = Mean())</code></pre><pre><code class="language-none">100-element StructArrays.StructArray{Tuple{Float64,Float64},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},Array{Float64,1}}}}:
+ (-2.832, 0.007095095625459628)             
+ (-2.550939393939394, 0.007838324051760595) 
+ (-2.269878787878788, 0.008619592372159873) 
+ (-1.9888181818181818, 0.00943831366496331) 
+ (-1.7077575757575758, 0.010293824814249444)
+ (-1.4266969696969698, 0.011185676423288608)
+ (-1.1456363636363636, 0.012113357690992341)
+ (-0.8645757575757576, 0.01307621450967119) 
+ (-0.5835151515151515, 0.014073305125439826)
+ (-0.3024545454545455, 0.015103285160103229)
+ ⋮                                          
+ (22.744515151515152, 0.030139050666702843) 
+ (23.02557575757576, 0.02863268848121857)   
+ (23.306636363636365, 0.02704926915097793)  
+ (23.58769696969697, 0.025399256774123878)  
+ (23.868757575757577, 0.023696502599550594) 
+ (24.149818181818183, 0.021957549666849027) 
+ (24.43087878787879, 0.020201313548203686)  
+ (24.711939393939392, 0.018448259380673813) 
+ (24.993, 0.016719486604897804)             </code></pre><p>For more complex statistics, one can combine simple statistics using <code>Series</code> or <code>FTSeries</code> from OnlineStats:</p><pre><code class="language-julia">using OnlineStats
+compute_summary(density, data, :School; select = :MAch, stat = Series(Mean(), Variance()))</code></pre><pre><code class="language-none">100-element StructArrays.StructArray{Tuple{Float64,Tuple{Float64,Float64}},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},StructArrays.StructArray{Tuple{Float64,Float64},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},Array{Float64,1}}}}}}}:
+ (-2.832, (0.007095095625459628, 5.429827348111684e-5))               
+ (-2.550939393939394, (0.007838324051760595, 6.271167564512218e-5))   
+ (-2.269878787878788, (0.008619592372159873, 7.175171458475676e-5))   
+ (-1.9888181818181818, (0.00943831366496331, 8.143471832335718e-5))   
+ (-1.7077575757575758, (0.010293824814249444, 9.180535294452775e-5))  
+ (-1.4266969696969698, (0.011185676423288608, 0.00010292997447851488))
+ (-1.1456363636363636, (0.012113357690992341, 0.0001148942450264013)) 
+ (-0.8645757575757576, (0.01307621450967119, 0.00012779127215077542)) 
+ (-0.5835151515151515, (0.014073305125439826, 0.00014170510782808015))
+ (-0.3024545454545455, (0.015103285160103229, 0.00015668928900544802))
+ ⋮                                                                    
+ (22.744515151515152, (0.030139050666702843, 0.00035859149012520443)) 
+ (23.02557575757576, (0.02863268848121857, 0.00033796481060317394))   
+ (23.306636363636365, (0.02704926915097793, 0.00031416598195279315))  
+ (23.58769696969697, (0.025399256774123878, 0.0002876568630193606))   
+ (23.868757575757577, (0.023696502599550594, 0.0002590768960932943))  
+ (24.149818181818183, (0.021957549666849027, 0.00022925248821904244)) 
+ (24.43087878787879, (0.020201313548203686, 0.00019913497974002225))  
+ (24.711939393939392, (0.018448259380673813, 0.00016971866594293585)) 
+ (24.993, (0.016719486604897804, 0.0001419352543709596))              </code></pre><p>Recombinase provided a <code>MappedStat</code> type to apply a function to turn the result of the summary statistics into values we plot. <code>MappedStat</code> needs a function that can take the number of observations of an <code>OnlineStat</code> and its value and uses them to compute trend and error. To compute a different error bar (for example just the standard deviation) you can simply do:</p><pre><code class="language-julia">using Recombinase: MappedStat
+stats = Series(Mean(), Variance())
+postprocess(nobs, (mean, var)) = (mean, sqrt(var))
+compute_summary(density, data, :School; select = :MAch, stat = MappedStat(postprocess, stats))</code></pre><pre><code class="language-none">100-element StructArrays.StructArray{Tuple{Float64,Tuple{Float64,Float64}},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},StructArrays.StructArray{Tuple{Float64,Float64},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},Array{Float64,1}}}}}}}:
  (-2.832, (0.007095095625459628, 0.007368736220079861))             
  (-2.550939393939394, (0.007838324051760595, 0.007919070377583607)) 
- (-2.269878787878788, (0.008619592372159876, 0.008470638381182187)) 
- (-1.9888181818181818, (0.009438313664963307, 0.009024118700646464))
+ (-2.269878787878788, (0.008619592372159873, 0.008470638381182186)) 
+ (-1.9888181818181818, (0.00943831366496331, 0.009024118700646462)) 
  (-1.7077575757575758, (0.010293824814249444, 0.009581510994855026))
- (-1.4266969696969698, (0.011185676423288606, 0.01014544106870248)) 
- (-1.1456363636363636, (0.01211335769099234, 0.010718873309560163)) 
+ (-1.4266969696969698, (0.011185676423288608, 0.010145441068702478))
+ (-1.1456363636363636, (0.012113357690992341, 0.010718873309560166))
  (-0.8645757575757576, (0.01307621450967119, 0.011304480180476032)) 
  (-0.5835151515151515, (0.014073305125439826, 0.011903995456487714))
- (-0.3024545454545455, (0.015103285160103232, 0.012517559227159587))
+ (-0.3024545454545455, (0.015103285160103229, 0.012517559227159584))
  ⋮                                                                  
- (22.744515151515152, (0.030139050666702846, 0.018936512089748853)) 
- (23.02557575757576, (0.028632688481218565, 0.018383819260512052))  
- (23.306636363636365, (0.02704926915097793, 0.017724727979655797))  
- (23.58769696969697, (0.025399256774123875, 0.016960449965120635))  
+ (22.744515151515152, (0.030139050666702843, 0.018936512089748853)) 
+ (23.02557575757576, (0.02863268848121857, 0.018383819260512052))   
+ (23.306636363636365, (0.02704926915097793, 0.0177247279796558))    
+ (23.58769696969697, (0.025399256774123878, 0.016960449965120635))  
  (23.868757575757577, (0.023696502599550594, 0.016095865807507662)) 
- (24.149818181818183, (0.02195754966684903, 0.015141086097735608))  
- (24.43087878787879, (0.02020131354820369, 0.014111519398704812))   
+ (24.149818181818183, (0.021957549666849027, 0.015141086097735606)) 
+ (24.43087878787879, (0.020201313548203686, 0.014111519398704813))  
  (24.711939393939392, (0.018448259380673813, 0.013027611674552471)) 
- (24.993, (0.016719486604897808, 0.01191365831182679))              </code></pre><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><footer><hr/><a class="previous" href="../../interactive_interface/"><span class="direction">Previous</span><span class="title">Interactive interface</span></a></footer></article></body></html>
+ (24.993, (0.016719486604897804, 0.01191365831182679))              </code></pre><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><footer><hr/><a class="previous" href="../../interactive_interface/"><span class="direction">Previous</span><span class="title">Interactive interface</span></a></footer></article></body></html>
