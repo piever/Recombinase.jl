@@ -7,16 +7,20 @@ _padded_tuple(default, v::AbstractArray{T, N}, n::Tuple) where {T, N} = Tuple(i 
 to_indexarray(t::Tuple{AbstractArray}) = t[1]
 to_indexarray(t::Tuple{AbstractArray, Vararg{AbstractArray}}) = CartesianIndices(t)
 
-function offsetrange(v, offset, range = axes(v))
-    padded_offset = _padded_tuple((args...) -> 0, v, offset)
-    padded_range = _padded_tuple(axes, v, range)
-    rel_offset = map(axes(v), padded_offset, padded_range) do ax, off, r
+_view(a::AbstractArray{<:Any, M}, b::AbstractArray{<:Any, N}) where {M, N} = view(a, b, ntuple(_ -> :, M-N)...)
+_view(a::AbstractArray{<:Any, N}, b::AbstractArray{<:Any, N}) where {N} = view(a, b)
+
+offsetrange(v, offset, range=()) = offsetrange(v, to_tuple(offset)::Tuple, to_tuple(range)::Tuple)
+
+function offsetrange(v, offset::NTuple{O, Any}, range::NTuple{R, Any}=()) where {O, R}
+    padded_range = (range..., axes(v)[R+1:O]...)
+    rel_offset = map(axes(v)[1:O], offset, padded_range) do ax, off, r
         - off + first(r) - first(ax)
     end
     OffsetArray(to_indexarray(padded_range), rel_offset)
 end
 
-aroundindex(v, args...) = view(v, offsetrange(v, args...))
+aroundindex(v, args...) = _view(v, offsetrange(v, args...))
 
 function initstats(stat, ranges)
     ranges = to_tuple(ranges)
