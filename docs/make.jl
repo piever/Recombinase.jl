@@ -1,8 +1,4 @@
-using Documenter, Literate
-using Statistics, StatsBase, StatsPlots, JuliaDB
-using OnlineStats
-using Recombinase: Group, series2D, datafolder
-using Recombinase: compute_summary, discrete, density, hazard, cumulative, prediction
+using Documenter, Literate, Recombinase
 
 @info "makedocs"
 

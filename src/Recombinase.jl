@@ -14,6 +14,9 @@ using Widgets: Widget, dropdown, toggle, button
 using OrderedCollections: OrderedDict
 using OnlineStatsBase: Mean, Variance, FTSeries, fit!, OnlineStat, nobs, value
 
+export Group, compute_summary, series2D
+export discrete
+
 datafolder = joinpath(@__DIR__, "..", "data")
 
 include("analysisfunctions.jl")

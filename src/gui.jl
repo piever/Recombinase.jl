@@ -28,7 +28,7 @@ end
 
 
 """
-`gui(data, plotters)`
+`gui(data, plotters; postprocess = NamedTuple())`
 
 Create a gui around `data::IndexedTable` given a list of plotting
 functions plotters.
@@ -42,7 +42,7 @@ plotters = [plot, scatter, groupedbar]
 Recombinase.gui(school, plotters)
 ```
 """
-function gui(data, plotters)
+function gui(data, plotters; postprocess = NamedTuple())
     (data isa Observables.AbstractObservable) || (data = Observables.Observable{Any}(data))
     ns = Observables.@map collect(colnames(&data))
     maybens = Observables.@map vcat(Symbol(), &ns)
@@ -66,8 +66,15 @@ function gui(data, plotters)
         grps = Dict(key => val[] for (key, val) in zip(styles, splitters) if val[] != Symbol())
         an = an_opt[]
         an_inf = isnothing(an) ? nothing : Analysis{axis_type[]}(an)
-        args, kwargs = series2D(an_inf, &data, Group(; grps...);
-            select = select, error = error[], ribbon = ribbon[])
+        args, kwargs = series2D(
+                                an_inf, 
+                                &data,
+                                Group(; grps...);
+                                postprocess = postprocess,
+                                select = select,
+                                error = error[],
+                                ribbon = ribbon[]
+                               )
         plotter[](args...; kwargs..., string2kwargs(plot_kwargs[])...)
     end
     ui = Widget(

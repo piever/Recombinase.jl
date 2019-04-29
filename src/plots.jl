@@ -52,6 +52,7 @@ series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwar
 function series2D(f, t::IndexedTable, g = Group(); select, postprocess = NamedTuple(),
     error = automatic, ribbon=false, stats=summary, filter=isfinitevalue, transform=identity, min_nobs=2, kwargs...)
 
+    isa(g, Group) || (g = Group(g)) 
     group = g.kwargs
     if isempty(group)
         itr = ("" => :,)
