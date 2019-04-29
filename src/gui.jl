@@ -42,15 +42,16 @@ plotters = [plot, scatter, groupedbar]
 Recombinase.gui(school, plotters)
 ```
 """
-function gui(data, plotters; postprocess = NamedTuple())
-    (data isa Observables.AbstractObservable) || (data = Observables.Observable{Any}(data))
-    ns = Observables.@map collect(colnames(&data))
-    maybens = Observables.@map vcat(Symbol(), &ns)
+function gui(data′, plotters; postprocess = NamedTuple())
+    (data′ isa AbstractObservable) || (data′ = Observable{Any}(data′))
+    data = @map table(&data′, copy = false, presorted = true)
+    ns = @map collect(colnames(&data))
+    maybens = @map vcat(Symbol(), &ns)
     xaxis = dropdown(ns,label = "X")
     yaxis = dropdown(maybens,label = "Y")
     an_opt = dropdown(analysis_options, label = "Analysis")
     axis_type = dropdown([:automatic, :continuous, :discrete, :vectorial], label = "Axis type")
-    error = dropdown(Observables.@map(vcat(automatic, &ns)), label="Error")
+    error = dropdown(@map(vcat(automatic, &ns)), label="Error")
     styles = collect(keys(style_dict))
     sort!(styles)
     smallns = map(take_small, data, maybens)
@@ -58,9 +59,9 @@ function gui(data, plotters; postprocess = NamedTuple())
     plotter = dropdown(plotters, label = "Plotter")
     ribbon = toggle("Ribbon", value = false)
     btn = button("Plot")
-    output = Observables.Observable{Any}("Set the dropdown menus and press plot to get started.")
+    output = Observable{Any}("Set the dropdown menus and press plot to get started.")
     plot_kwargs = Widgets.textbox("Insert optional plot attributes")
-    Observables.@map! output begin
+    @map! output begin
         &btn
         select = yaxis[] == Symbol() ? xaxis[] : (xaxis[], yaxis[])
         grps = Dict(key => val[] for (key, val) in zip(styles, splitters) if val[] != Symbol())

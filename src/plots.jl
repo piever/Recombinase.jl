@@ -47,19 +47,31 @@ function series2D(s::StructVector; ribbon = false)
     return (x, y), kwargs
 end
 
-series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
+series2D(t, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
-function series2D(f, t::IndexedTable, g = Group(); select, postprocess = NamedTuple(),
+function series2D(f::Union{Nothing, FunctionOrAnalysis}, t, g = Group();
+                  select, error = automatic, kwargs...)
+    isa(g, Group) || (g = Group(g)) 
+    by = _flatten(g.kwargs)
+    err_cols = error === automatic ? () : to_tuple(error)
+    seldata = Tables.select(t, to_tuple(by)..., to_tuple(select)..., err_cols...)
+    rows::StructArray = StructArray(Tables.columntable(seldata))
+    t = table(rows, copy=false)
+    return series2D(f, t, g; select = select, error = error, kwargs...)
+end
+
+function series2D(f::Union{Nothing, FunctionOrAnalysis}, t′::IndexedTable, g = Group(); select, postprocess = NamedTuple(),
     error = automatic, ribbon=false, stats=summary, filter=isfinitevalue, transform=identity, min_nobs=2, kwargs...)
 
+    t = dropmissing(t′, select)
     isa(g, Group) || (g = Group(g)) 
     group = g.kwargs
     if isempty(group)
         itr = ("" => :,)
     else
         by = _flatten(group)
-        perm = sortpermby(t, by)
-        itr = finduniquesorted(rows(t, by), perm)
+        perm, group_rows = sortpermby(t, by, return_keys = true)
+        itr = finduniquesorted(group_rows, perm)
     end
     data = collect_columns_flattened(
         key => compute_summary(
