@@ -23,16 +23,18 @@ function sortpermby(t::IndexedTable, ::Observations; return_keys = false)
 end
 
 function apply_postprocess(t::IndexedTable, res; select, postprocess)
-    cols = fieldarrays(res)
+    cols = Tuple(fieldarrays(res))
     colinds = to_tuple(lowerselection(t, select))
-    res = map(Tuple(cols), colinds) do col, ind
+    N = length(colinds)
+    cols_trimmed = cols[1:N]
+    res = map(cols_trimmed, colinds) do col, ind
         isa(ind, Integer) && ind > 0 || return col 
         name = colnames(t)[ind]
         haskey(postprocess, name) || return col
         f = postprocess[name]
         return collect_columns(apply(f, el) for el in col)
     end
-    StructArray(res)
+    StructArray((res..., cols[N+1:end]...))
 end
 
 function series2D(s::StructVector; ribbon = false)
