@@ -126,13 +126,13 @@ end
 
 const cumulative = Analysis((continuous = _cumulative, discrete = _cumulative_frequency))
 
-function _hazard(t; npoints = 100, axis = continuous_axis(x, npoints = npoints), kwargs...)
+function _hazard(t; npoints = 100, axis = continuous_axis(t, npoints = npoints), kwargs...)
     pdf_iter = _density(t; axis = axis, kwargs...)
     cdf_func = ecdf(t)
     ((val, pdf / (1 + step(axis) * pdf - cdf_func(val))) for (val, pdf) in pdf_iter)
 end
 
-function _hazard_frequency(t; axis = discrete_axis(x), kwargs...)
+function _hazard_frequency(t; axis = discrete_axis(t), kwargs...)
     pdf_iter = _frequency(t; axis = axis, kwargs...)
     cdf_func = ecdf(t)
     ((val, pdf / (1 + pdf - cdf_func(val))) for (val, pdf) in pdf_iter)
