@@ -52,8 +52,9 @@ function compute_summary(keys::AbstractVector, cols::Tup; kwargs...)
     collect_columns(val for (_, val) in lazy_summary(keys, cols; kwargs...))
 end
 
-compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::AbstractVector; kwargs...) =
+function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::AbstractVector; kwargs...)
     compute_summary(f, keys, (cols,); kwargs...)
+end
 
 function compute_summary(f::FunctionOrAnalysis, keys::AbstractVector, cols::Tup;
     min_nobs = 2, perm = sortperm(keys), stats = summary, kwargs...)
@@ -89,7 +90,10 @@ end
 
 compute_summary(::Nothing, args...; kwargs...) = compute_summary(args...; kwargs...)
 
-function compute_summary(t::IndexedTable, ::Automatic; select, kwargs...)
+compute_summary(t::IndexedTable, ::Automatic; select, kwargs...) =
+    compute_summary(t; select = select, kwargs...)
+
+function compute_summary(t::IndexedTable; select, kwargs...)
     rows(t, select)
 end
 

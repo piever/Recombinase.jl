@@ -140,3 +140,20 @@ args, kwargs = series2D(
     ribbon = true,
 )
 plot(args...; kwargs...)
+
+# ### Post processing
+#
+# Finally, for some analyses it can be useful to postprocess the result. For example, in the case
+# of the "signal plot" above, we may wish to rescale the `x` axis. This is done by passing a named
+# tuple of functions as a `postprocess` keyword argument, which will be applied element-wise to the relative column of the output. For example, if our signal was sampled at `60 Hz`, we may wish to divide the `:offsets` column by `60` to show the result in seconds:
+
+args, kwargs = series2D(
+    prediction(axis = -60:60),
+    t,
+    Group(:peak),
+    select = (:offsets, :signals),
+    ribbon = true,
+    postprocess = (; offsets = t -> t/60),
+)
+plot(args...; kwargs...)
+

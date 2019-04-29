@@ -22,6 +22,21 @@ function sortpermby(t::IndexedTable, ::Observations; return_keys = false)
     return return_keys ? (perm, perm) : perm
 end
 
+function apply_postprocess(t::IndexedTable, res; select, postprocess)
+    cols = Tuple(fieldarrays(res))
+    colinds = to_tuple(lowerselection(t, select))
+    N = length(colinds)
+    cols_trimmed = cols[1:N]
+    res = map(cols_trimmed, colinds) do col, ind
+        isa(ind, Integer) && ind > 0 || return col 
+        name = colnames(t)[ind]
+        haskey(postprocess, name) || return col
+        f = postprocess[name]
+        return collect_columns(apply(f, el) for el in col)
+    end
+    StructArray((res..., cols[N+1:end]...))
+end
+
 function series2D(s::StructVector; ribbon = false)
     kwargs = Dict{Symbol, Any}()
     xcols, ycols = map(columntuple, fieldarrays(s))
@@ -34,7 +49,7 @@ end
 
 series2D(t::IndexedTable, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
-function series2D(f, t::IndexedTable, g = Group(); select,
+function series2D(f, t::IndexedTable, g = Group(); select, postprocess = NamedTuple(),
     error = automatic, ribbon=false, stats=summary, filter=isfinitevalue, transform=identity, min_nobs=2, kwargs...)
 
     group = g.kwargs
@@ -57,7 +72,8 @@ function series2D(f, t::IndexedTable, g = Group(); select,
             transform=transform,
         ) for (key, idxs) in itr
     )
-    plot_args, plot_kwargs = series2D(data.second; ribbon = ribbon)
+    res = apply_postprocess(t, data.second; select = select, postprocess = postprocess)
+    plot_args, plot_kwargs = series2D(res; ribbon = ribbon)
     plot_kwargs[:group] = columns(data.first)
     grpd = collect_columns(key for (key, _) in itr)
     style_kwargs = Dict(kwargs)
