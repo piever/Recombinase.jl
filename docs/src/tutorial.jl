@@ -4,11 +4,11 @@
 #
 
 using Statistics, StatsBase, StatsPlots, JuliaDB
-using OnlineStats
-using Recombinase: Group, series2D, datafolder
-using Recombinase: compute_summary, discrete, density, hazard, cumulative, prediction
+using OnlineStats: Mean, Variance
+using Recombinase
+using Recombinase: cumulative, density, hazard, prediction
 
-data = loadtable(joinpath(datafolder, "school.csv"))
+data = loadtable(joinpath(Recombinase.datafolder, "school.csv"))
 
 #
 # ### Simple scatter plots
