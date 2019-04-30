@@ -8,6 +8,7 @@ struct Group{NT}
 end
 
 Group(s) = Group(color = s)
+apply(f::Function, g::Group) = Group(; map(t -> apply(f, t), g.kwargs)...)
 
 to_string(t::Tuple) = join(t, ", ")
 to_string(t::Any) = string(t)
@@ -54,10 +55,15 @@ function series2D(f::Union{Nothing, FunctionOrAnalysis}, t, g = Group();
     isa(g, Group) || (g = Group(g)) 
     by = _flatten(g.kwargs)
     err_cols = error === automatic ? () : to_tuple(error)
-    seldata = Tables.select(t, to_tuple(by)..., to_tuple(select)..., err_cols...)
-    rows::StructArray = StructArray(Tables.columntable(seldata))
-    t = table(rows, copy=false)
-    return series2D(f, t, g; select = select, error = error, kwargs...)
+    sel_cols = (to_tuple(by)..., to_tuple(select)..., err_cols...)
+    coltable = Tables.columntable(Tables.select(t, sel_cols...))
+    coldict = Dict(zip(sel_cols, keys(coltable)))
+    to_symbol = i -> coldict[i]
+    t = table(coltable, copy=false)
+    return series2D(f, t, apply(to_symbol, g);
+                    select = apply(to_symbol, select),
+                    error = apply(to_symbol, error),
+                    kwargs...)
 end
 
 function series2D(f::Union{Nothing, FunctionOrAnalysis}, t′::IndexedTable, g = Group(); select, postprocess = NamedTuple(),
