@@ -4,7 +4,8 @@ struct Automatic; end
 const automatic = Automatic()
 Base.string(::Automatic) = "automatic"
 
-apply(f, val) = f(val)
+apply(f::Function, a::Automatic) = a
+apply(f::Function, val) = f(val)
 apply(f::Tup, val::Tup) = map(apply, f, val)
 apply(f::Function, val::Tup) = map(f, val)
 _all(f::Function, tup::Tup) = all(f, tup)
