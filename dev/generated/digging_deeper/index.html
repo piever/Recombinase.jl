@@ -3,69 +3,69 @@
 x = randn(100)
 res = density(x)
 collect(Iterators.take(res, 5)) # let&#39;s see the first few elements</code></pre><pre><code class="language-none">5-element Array{Tuple{Float64,Float64},1}:
- (-2.2276822063246438, 0.05007040663402886)
- (-2.179124593332048, 0.058026531505875514)
- (-2.1305669803394522, 0.06658894064609315)
- (-2.0820093673468567, 0.07565195938438017)
- (-2.0334517543542607, 0.08507158882965285)</code></pre><p>We can collect the iterator in a table container to see that we recover the <code>x</code> and <code>y</code> axis, ready for plotting</p><pre><code class="language-julia">using JuliaDB
+ (-2.1739874263032393, 0.07610357160376069)
+ (-2.126674327118973, 0.08444296010847181) 
+ (-2.0793612279347076, 0.09267506045203723)
+ (-2.0320481287504415, 0.10074214260685486)
+ (-1.9847350295661756, 0.10863052402491963)</code></pre><p>We can collect the iterator in a table container to see that we recover the <code>x</code> and <code>y</code> axis, ready for plotting</p><pre><code class="language-julia">using JuliaDB
 s = table(res)</code></pre><pre><code class="language-none">Table with 100 rows, 2 columns:
 1         2
 ───────────────────
--2.22768  0.0500704
--2.17912  0.0580265
--2.13057  0.0665889
--2.08201  0.075652
--2.03345  0.0850716
--1.98489  0.0946682
--1.93634  0.104233
--1.88778  0.113542
--1.83922  0.122368
+-2.17399  0.0761036
+-2.12667  0.084443
+-2.07936  0.0926751
+-2.03205  0.100742
+-1.98474  0.108631
+-1.93742  0.116368
+-1.89011  0.124013
+-1.8428   0.131641
+-1.79548  0.139318
 ⋮
-2.23962   0.0311248
-2.28818   0.032468
-2.33673   0.0338016
-2.38529   0.0349765
-2.43385   0.0358533
-2.48241   0.0363133
-2.53096   0.0362674
-2.57952   0.0356638</code></pre><p><code>prediction</code> is similar but requrires two arguments:</p><pre><code class="language-julia">xs = 10 .* rand(100)
+2.17882   0.0269954
+2.22613   0.0239474
+2.27344   0.0215144
+2.32076   0.0195974
+2.36807   0.0180848
+2.41538   0.0168629
+2.4627    0.0158245
+2.51001   0.0148775</code></pre><p><code>prediction</code> is similar but requrires two arguments:</p><pre><code class="language-julia">xs = 10 .* rand(100)
 ys = sin.(xs) .+ 0.5 .* rand(100)
 
 res = prediction(xs, ys)
 table(res)</code></pre><pre><code class="language-none">Table with 98 rows, 2 columns:
 1         2
 ────────────────────
-0.16804   0.549348
-0.26831   0.615452
-0.368581  0.675183
-0.468851  0.728707
-0.569121  0.776279
-0.669392  0.817897
-0.769662  0.854206
-0.869932  0.884577
-0.970203  0.909145
+0.203031  0.845979
+0.302741  0.893198
+0.402452  0.934918
+0.502162  0.971268
+0.601872  1.00238
+0.701583  1.02859
+0.801293  1.04999
+0.901003  1.06633
+1.00071   1.07801
 ⋮
-9.19237   0.496091
-9.29264   0.415971
-9.39291   0.32949
-9.49318   0.236548
-9.59345   0.137377
-9.69372   0.031916
-9.79399   -0.0800652
-9.89426   -0.198653</code></pre><p>The function <code>discrete</code> can turn any analysis into its discrete counter-part (analyses are continuous for numerical axes and discrete otherwise by default). It also automatically comutes the error of the prediction (s.e.m).</p><pre><code class="language-julia">using Recombinase: discrete
+9.17696   0.503374
+9.27667   0.43081
+9.37638   0.352191
+9.47609   0.267382
+9.5758    0.176264
+9.67551   0.079089
+9.77522   -0.0243402
+9.87493   -0.1342</code></pre><p>The function <code>discrete</code> can turn any analysis into its discrete counter-part (analyses are continuous for numerical axes and discrete otherwise by default). It also automatically comutes the error of the prediction (s.e.m).</p><pre><code class="language-julia">using Recombinase: discrete
 
 x = rand(1:3, 1000)
 y = rand(1000) .+ 0.1 .* x
 
 res = discrete(prediction)(x, y)
-table(res)</code></pre><pre><code class="language-none">Table with 3 rows, 3 columns:
-1  2         3
-──────────────────────
-1  0.595223  0.0152813
-2  0.704224  0.0161039
-3  0.812744  0.0166374</code></pre><h2><a class="nav-anchor" id="OnlineStats-integration-1" href="#OnlineStats-integration-1">OnlineStats integration</a></h2><p>Summary statistics are computed using the excellent <a href="https://github.com/joshday/OnlineStats.jl">OnlineStats</a> package. First the data is split by the splitting variable (in this case <code>School</code>), then the analysis is computed on each split chunk on the selected column(s). Finally the results from different schools are put together in summary statistics (default is <code>mean</code> and <code>s.e.m</code>):</p><pre><code class="language-julia">using Recombinase: datafolder, compute_summary
+table(res)</code></pre><pre><code class="language-none">Table with 3 rows, 2 columns:
+first  second
+────────────────────────────
+1      (0.610216, 0.0151666)
+2      (0.717793, 0.0152961)
+3      (0.806469, 0.0168081)</code></pre><h2><a class="nav-anchor" id="OnlineStats-integration-1" href="#OnlineStats-integration-1">OnlineStats integration</a></h2><p>Summary statistics are computed using the excellent <a href="https://github.com/joshday/OnlineStats.jl">OnlineStats</a> package. First the data is split by the splitting variable (in this case <code>School</code>), then the analysis is computed on each split chunk on the selected column(s). Finally the results from different schools are put together in summary statistics (default is <code>mean</code> and <code>s.e.m</code>):</p><pre><code class="language-julia">using Recombinase: datafolder, compute_summary
 data = loadtable(joinpath(datafolder, &quot;school.csv&quot;))
-compute_summary(density, data, :School; select = :MAch)</code></pre><pre><code class="language-none">100-element StructArrays.StructArray{Tuple{Float64,Tuple{Float64,Float64}},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},StructArrays.StructArray{Tuple{Float64,Float64},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},Array{Float64,1}}}}}}}:
+compute_summary(density, data, :School; select = :MAch)</code></pre><pre><code class="language-none">100-element StructArray(::Array{Float64,1}, StructArray(::Array{Float64,1}, ::Array{Float64,1})) with eltype Tuple{Float64,Tuple{Float64,Float64}}:
  (-2.832, (0.007095095625459628, 0.0005825497483108032))             
  (-2.550939393939394, (0.007838324051760595, 0.0006260574836083454)) 
  (-2.269878787878788, (0.008619592372159876, 0.0006696627630044319)) 
@@ -86,7 +86,7 @@ compute_summary(density, data, :School; select = :MAch)</code></pre><pre><code c
  (24.43087878787879, (0.02020131354820369, 0.0011156135636389236))   
  (24.711939393939392, (0.018448259380673813, 0.0010299231340946513)) 
  (24.993, (0.016719486604897808, 0.0009418573882592296))             </code></pre><p>Any summary statistic can be used. If we only want the mean we can use</p><pre><code class="language-julia">using OnlineStats
-compute_summary(density, data, :School; select = :MAch, stats = Mean())</code></pre><pre><code class="language-none">100-element StructArrays.StructArray{Tuple{Float64,Float64},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},Array{Float64,1}}}}:
+compute_summary(density, data, :School; select = :MAch, stats = Mean())</code></pre><pre><code class="language-none">100-element StructArray(::Array{Float64,1}, ::Array{Float64,1}) with eltype Tuple{Float64,Float64}:
  (-2.832, 0.007095095625459628)             
  (-2.550939393939394, 0.007838324051760595) 
  (-2.269878787878788, 0.008619592372159876) 
@@ -107,7 +107,7 @@ compute_summary(density, data, :School; select = :MAch, stats = Mean())</code></
  (24.43087878787879, 0.02020131354820369)   
  (24.711939393939392, 0.018448259380673813) 
  (24.993, 0.016719486604897808)             </code></pre><p>We can also pass a <code>Tuple</code> of statistics to compute many at the same time:</p><pre><code class="language-julia">using OnlineStats
-compute_summary(density, data, :School; select = :MAch, stats = Series(Mean(), Variance()))</code></pre><pre><code class="language-none">100-element StructArrays.StructArray{Tuple{Float64,Tuple{Float64,Float64}},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},StructArrays.StructArray{Tuple{Float64,Float64},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},Array{Float64,1}}}}}}}:
+compute_summary(density, data, :School; select = :MAch, stats = Series(Mean(), Variance()))</code></pre><pre><code class="language-none">100-element StructArray(::Array{Float64,1}, StructArray(::Array{Float64,1}, ::Array{Float64,1})) with eltype Tuple{Float64,Tuple{Float64,Float64}}:
  (-2.832, (0.007095095625459628, 5.4298273481116836e-5))              
  (-2.550939393939394, (0.007838324051760595, 6.271167564512218e-5))   
  (-2.269878787878788, (0.008619592372159876, 7.175171458475678e-5))   
@@ -128,7 +128,7 @@ compute_summary(density, data, :School; select = :MAch, stats = Series(Mean(), V
  (24.43087878787879, (0.02020131354820369, 0.00019913497974002222))   
  (24.711939393939392, (0.018448259380673813, 0.00016971866594293585)) 
  (24.993, (0.016719486604897808, 0.00014193525437095956))             </code></pre><p>One can optionally pass pairs of <code>OnlineStat</code> and function to apply the function to the <code>OnlineStat</code> before plotting (default is just taking the <code>value</code>). To compute a different error bar (for example just the standard deviation) you can simply do:</p><pre><code class="language-julia">stats = (Mean(), Variance() =&gt; t -&gt; sqrt(value(t)))
-compute_summary(density, data, :School; select = :MAch, stats = stats)</code></pre><pre><code class="language-none">100-element StructArrays.StructArray{Tuple{Float64,Tuple{Float64,Float64}},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},StructArrays.StructArray{Tuple{Float64,Float64},1,NamedTuple{(:x1, :x2),Tuple{Array{Float64,1},Array{Float64,1}}}}}}}:
+compute_summary(density, data, :School; select = :MAch, stats = stats)</code></pre><pre><code class="language-none">100-element StructArray(::Array{Float64,1}, StructArray(::Array{Float64,1}, ::Array{Float64,1})) with eltype Tuple{Float64,Tuple{Float64,Float64}}:
  (-2.832, (0.007095095625459628, 0.007368736220079861))             
  (-2.550939393939394, (0.007838324051760595, 0.007919070377583607)) 
  (-2.269878787878788, (0.008619592372159876, 0.008470638381182187)) 
