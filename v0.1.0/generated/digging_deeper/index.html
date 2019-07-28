@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Digging deeper · Recombinase.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link href="../../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>Recombinase.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../../">Index</a></li><li><a class="toctext" href="../tutorial/">Tutorial</a></li><li><a class="toctext" href="../../interactive_interface/">Interactive interface</a></li><li class="current"><a class="toctext" href>Digging deeper</a><ul class="internal"><li><a class="toctext" href="#Analysis-functions-1">Analysis functions</a></li><li><a class="toctext" href="#OnlineStats-integration-1">OnlineStats integration</a></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li><a href>Digging deeper</a></li></ul><a class="edit-page" href="https://github.com/piever/Recombinase.jl/blob/master/docs/src/digging_deeper.jl"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Digging deeper</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Digging-deeper-1" href="#Digging-deeper-1">Digging deeper</a></h1><p>The core functioning of Recombinase is based on a set of preimplemented analysis functions and on the <a href="https://github.com/joshday/OnlineStats.jl">OnlineStats</a> package to compute summary statistics efficiently.</p><h2><a class="nav-anchor" id="Analysis-functions-1" href="#Analysis-functions-1">Analysis functions</a></h2><p>Under the hood, the actual computations are implemented in some built-in <code>Analysis</code> objects. Each <code>Analysis</code> takes some vectors (a varying number, one for <code>density</code> and two for <code>prediction</code> for example), an optional <code>axis</code> argument to specify the <code>x</code> axis argument and returns an iterator of <code>(x, y)</code> values, representing the <code>y</code> value corresponding to each point of the <code>x</code> axis.</p><pre><code class="language-julia">using Recombinase: density, hazard, cumulative, prediction
+x = randn(100)
+res = density(x)
+collect(Iterators.take(res, 5)) # let&#39;s see the first few elements</code></pre><pre><code class="language-none">5-element Array{Tuple{Float64,Float64},1}:
+ (-2.261856451834504, 0.013149465927354996) 
+ (-2.2056079180969714, 0.014317442237310324)
+ (-2.149359384359439, 0.015794192905953894) 
+ (-2.0931108506219065, 0.017770139022325337)
+ (-2.036862316884374, 0.020476185299084473) </code></pre><p>We can collect the iterator in a table container to see that we recover the <code>x</code> and <code>y</code> axis, ready for plotting</p><pre><code class="language-julia">using JuliaDB
+s = table(res)</code></pre><pre><code class="language-none">Table with 100 rows, 2 columns:
+1         2
+───────────────────
+-2.26186  0.0131495
+-2.20561  0.0143174
+-2.14936  0.0157942
+-2.09311  0.0177701
+-2.03686  0.0204762
+-1.98061  0.0241755
+-1.92437  0.0291505
+-1.86812  0.0356858
+-1.81187  0.0440476
+⋮
+2.91301   0.0216037
+2.96926   0.0216842
+3.02551   0.0218418
+3.08175   0.0219589
+3.138     0.0219323
+3.19425   0.0216809
+3.2505    0.0211509
+3.30675   0.0203192</code></pre><p><code>prediction</code> is similar but requrires two arguments:</p><pre><code class="language-julia">xs = 10 .* rand(100)
+ys = sin.(xs) .+ 0.5 .* rand(100)
+
+res = prediction(xs, ys)
+table(res)</code></pre><pre><code class="language-none">Table with 98 rows, 2 columns:
+1         2
+────────────────────
+0.105192  0.849766
+0.205923  0.879588
+0.306654  0.904409
+0.407385  0.924477
+0.508116  0.940033
+0.608847  0.950962
+0.709578  0.957508
+0.810309  0.959804
+0.91104   0.957992
+⋮
+9.17097   0.580157
+9.2717    0.509801
+9.37243   0.433594
+9.47317   0.351714
+9.5739    0.264103
+9.67463   0.170525
+9.77536   0.0708816
+9.87609   -0.0349258</code></pre><p>The function <code>discrete</code> can turn any analysis into its discrete counter-part (analyses are continuous for numerical axes and discrete otherwise by default). It also automatically comutes the error of the prediction (s.e.m).</p><pre><code class="language-julia">using Recombinase: discrete
+
+x = rand(1:3, 1000)
+y = rand(1000) .+ 0.1 .* x
+
+res = discrete(prediction)(x, y)
+table(res)</code></pre><pre><code class="language-none">Table with 3 rows, 2 columns:
+first  second
+────────────────────────────
+1      (0.62767, 0.0165347)
+2      (0.720182, 0.0150576)
+3      (0.786909, 0.0161003)</code></pre><h2><a class="nav-anchor" id="OnlineStats-integration-1" href="#OnlineStats-integration-1">OnlineStats integration</a></h2><p>Summary statistics are computed using the excellent <a href="https://github.com/joshday/OnlineStats.jl">OnlineStats</a> package. First the data is split by the splitting variable (in this case <code>School</code>), then the analysis is computed on each split chunk on the selected column(s). Finally the results from different schools are put together in summary statistics (default is <code>mean</code> and <code>s.e.m</code>):</p><pre><code class="language-julia">using Recombinase: datafolder, compute_summary
+data = loadtable(joinpath(datafolder, &quot;school.csv&quot;))
+compute_summary(density, data, :School; select = :MAch)</code></pre><pre><code class="language-none">100-element StructArray(::Array{Float64,1}, StructArray(::Array{Float64,1}, ::Array{Float64,1})) with eltype Tuple{Float64,Tuple{Float64,Float64}}:
+ (-2.832, (0.007095095625459628, 0.0005825497483108032))             
+ (-2.550939393939394, (0.007838324051760595, 0.0006260574836083454)) 
+ (-2.269878787878788, (0.008619592372159876, 0.0006696627630044319)) 
+ (-1.9888181818181818, (0.009438313664963307, 0.0007134192242440505))
+ (-1.7077575757575758, (0.010293824814249444, 0.0007574849542421938))
+ (-1.4266969696969698, (0.011185676423288606, 0.0008020675411028164))
+ (-1.1456363636363636, (0.01211335769099234, 0.0008474013402249302)) 
+ (-0.8645757575757576, (0.01307621450967119, 0.0008936976283633891)) 
+ (-0.5835151515151515, (0.014073305125439826, 0.0009410934724699248))
+ (-0.3024545454545455, (0.015103285160103232, 0.000989599947597033)) 
+ ⋮                                                                   
+ (22.744515151515152, (0.030139050666702846, 0.0014970627285730306)) 
+ (23.02557575757576, (0.028632688481218565, 0.0014533685239022608))  
+ (23.306636363636365, (0.02704926915097793, 0.0014012627830656734))  
+ (23.58769696969697, (0.025399256774123875, 0.001340841300777614))   
+ (23.868757575757577, (0.023696502599550594, 0.0012724899216037388)) 
+ (24.149818181818183, (0.02195754966684903, 0.0011970079579388833))  
+ (24.43087878787879, (0.02020131354820369, 0.0011156135636389236))   
+ (24.711939393939392, (0.018448259380673813, 0.0010299231340946513)) 
+ (24.993, (0.016719486604897808, 0.0009418573882592296))             </code></pre><p>Any summary statistic can be used. If we only want the mean we can use</p><pre><code class="language-julia">using OnlineStats
+compute_summary(density, data, :School; select = :MAch, stats = Mean())</code></pre><pre><code class="language-none">100-element StructArray(::Array{Float64,1}, ::Array{Float64,1}) with eltype Tuple{Float64,Float64}:
+ (-2.832, 0.007095095625459628)             
+ (-2.550939393939394, 0.007838324051760595) 
+ (-2.269878787878788, 0.008619592372159876) 
+ (-1.9888181818181818, 0.009438313664963307)
+ (-1.7077575757575758, 0.010293824814249444)
+ (-1.4266969696969698, 0.011185676423288606)
+ (-1.1456363636363636, 0.01211335769099234) 
+ (-0.8645757575757576, 0.01307621450967119) 
+ (-0.5835151515151515, 0.014073305125439826)
+ (-0.3024545454545455, 0.015103285160103232)
+ ⋮                                          
+ (22.744515151515152, 0.030139050666702846) 
+ (23.02557575757576, 0.028632688481218565)  
+ (23.306636363636365, 0.02704926915097793)  
+ (23.58769696969697, 0.025399256774123875)  
+ (23.868757575757577, 0.023696502599550594) 
+ (24.149818181818183, 0.02195754966684903)  
+ (24.43087878787879, 0.02020131354820369)   
+ (24.711939393939392, 0.018448259380673813) 
+ (24.993, 0.016719486604897808)             </code></pre><p>We can also pass a <code>Tuple</code> of statistics to compute many at the same time:</p><pre><code class="language-julia">using OnlineStats
+compute_summary(density, data, :School; select = :MAch, stats = Series(Mean(), Variance()))</code></pre><pre><code class="language-none">100-element StructArray(::Array{Float64,1}, StructArray(::Array{Float64,1}, ::Array{Float64,1})) with eltype Tuple{Float64,Tuple{Float64,Float64}}:
+ (-2.832, (0.007095095625459628, 5.4298273481116836e-5))              
+ (-2.550939393939394, (0.007838324051760595, 6.271167564512218e-5))   
+ (-2.269878787878788, (0.008619592372159876, 7.175171458475678e-5))   
+ (-1.9888181818181818, (0.009438313664963307, 8.143471832335724e-5))  
+ (-1.7077575757575758, (0.010293824814249444, 9.180535294452776e-5))  
+ (-1.4266969696969698, (0.011185676423288606, 0.00010292997447851489))
+ (-1.1456363636363636, (0.01211335769099234, 0.00011489424502640124)) 
+ (-0.8645757575757576, (0.01307621450967119, 0.00012779127215077542)) 
+ (-0.5835151515151515, (0.014073305125439826, 0.00014170510782808015))
+ (-0.3024545454545455, (0.015103285160103232, 0.0001566892890054481)) 
+ ⋮                                                                    
+ (22.744515151515152, (0.030139050666702846, 0.00035859149012520443)) 
+ (23.02557575757576, (0.028632688481218565, 0.00033796481060317384))  
+ (23.306636363636365, (0.02704926915097793, 0.0003141659819527931))   
+ (23.58769696969697, (0.025399256774123875, 0.0002876568630193606))   
+ (23.868757575757577, (0.023696502599550594, 0.0002590768960932943))  
+ (24.149818181818183, (0.02195754966684903, 0.0002292524882190425))   
+ (24.43087878787879, (0.02020131354820369, 0.00019913497974002222))   
+ (24.711939393939392, (0.018448259380673813, 0.00016971866594293585)) 
+ (24.993, (0.016719486604897808, 0.00014193525437095956))             </code></pre><p>One can optionally pass pairs of <code>OnlineStat</code> and function to apply the function to the <code>OnlineStat</code> before plotting (default is just taking the <code>value</code>). To compute a different error bar (for example just the standard deviation) you can simply do:</p><pre><code class="language-julia">stats = (Mean(), Variance() =&gt; t -&gt; sqrt(value(t)))
+compute_summary(density, data, :School; select = :MAch, stats = stats)</code></pre><pre><code class="language-none">100-element StructArray(::Array{Float64,1}, StructArray(::Array{Float64,1}, ::Array{Float64,1})) with eltype Tuple{Float64,Tuple{Float64,Float64}}:
+ (-2.832, (0.007095095625459628, 0.007368736220079861))             
+ (-2.550939393939394, (0.007838324051760595, 0.007919070377583607)) 
+ (-2.269878787878788, (0.008619592372159876, 0.008470638381182187)) 
+ (-1.9888181818181818, (0.009438313664963307, 0.009024118700646464))
+ (-1.7077575757575758, (0.010293824814249444, 0.009581510994855026))
+ (-1.4266969696969698, (0.011185676423288606, 0.01014544106870248)) 
+ (-1.1456363636363636, (0.01211335769099234, 0.010718873309560163)) 
+ (-0.8645757575757576, (0.01307621450967119, 0.011304480180476032)) 
+ (-0.5835151515151515, (0.014073305125439826, 0.011903995456487714))
+ (-0.3024545454545455, (0.015103285160103232, 0.012517559227159587))
+ ⋮                                                                  
+ (22.744515151515152, (0.030139050666702846, 0.018936512089748853)) 
+ (23.02557575757576, (0.028632688481218565, 0.018383819260512052))  
+ (23.306636363636365, (0.02704926915097793, 0.017724727979655797))  
+ (23.58769696969697, (0.025399256774123875, 0.016960449965120635))  
+ (23.868757575757577, (0.023696502599550594, 0.016095865807507662)) 
+ (24.149818181818183, (0.02195754966684903, 0.015141086097735608))  
+ (24.43087878787879, (0.02020131354820369, 0.014111519398704812))   
+ (24.711939393939392, (0.018448259380673813, 0.013027611674552471)) 
+ (24.993, (0.016719486604897808, 0.01191365831182679))              </code></pre><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p><footer><hr/><a class="previous" href="../../interactive_interface/"><span class="direction">Previous</span><span class="title">Interactive interface</span></a></footer></article></body></html>
