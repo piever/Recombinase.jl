@@ -1,12 +1,29 @@
-struct Analysis{F, NT<:NamedTuple}
+struct Analysis{S, F, NT<:NamedTuple}
     f::F
     kwargs::NT
+    Analysis{S}(f::F, kwargs::NT) where {S, F, NT<:NamedTuple} =
+        new{S, F, NT}(f, kwargs)
 end
 
-Analysis(f; kwargs...) = Analysis(f, values(kwargs))
-Analysis(a::Analysis; kwargs...) = Analysis(a.f, merge(a.kwargs, values(kwargs))) 
-(a::Analysis)(; kwargs...) = Analysis(a; kwargs...)
-(a::Analysis)(args...) = a.f(args...; a.kwargs...)
+Analysis{S}(f; kwargs...) where {S} = Analysis{S}(f, values(kwargs))
+Analysis{S}(a::Analysis; kwargs...) where {S} = Analysis{S}(a.f, merge(a.kwargs, values(kwargs)))
+Analysis(args...; kwargs...) = Analysis{:automatic}(args...; kwargs...)
+
+getfunction(funcs, S) = funcs
+getfunction(funcs::NamedTuple, S::Symbol) = getfield(funcs, S)
+getfunction(a::Analysis{S}) where {S} = getfunction(a.f, S)
+
+(a::Analysis{S})(; kwargs...) where {S} = Analysis{S}(a; kwargs...)
+(a::Analysis{:automatic})(; kwargs...) = Analysis{:automatic}(a; kwargs...)
+(a::Analysis{S})(args...) where {S} = getfunction(a)(args...; a.kwargs...)
+(a::Analysis{:automatic})(args...) = (infer_axis(args...)(a))(args...)
+
+discrete(a::Analysis) = Analysis{:discrete}(a.f, a.kwargs)
+continuous(a::Analysis) = Analysis{:continuous}(a.f, a.kwargs)
+vectorial(a::Analysis) = Analysis{:vectorial}(a.f, a.kwargs)
+discrete(::Nothing) = nothing
+continuous(::Nothing) = nothing
+vectorial(::Nothing) = nothing
 
 Base.get(a::Analysis, s::Symbol, def) = get(a.kwargs, s, def)
 Base.get(f::Function, a::Analysis, s::Symbol) = get(f, a.kwargs, s)
@@ -21,72 +38,104 @@ const FunctionOrAnalysis = Union{Function, Analysis}
 # TODO compute axis if called standalone!
 compute_axis(f::Function, args...) = compute_axis(Analysis(f), args...)
 
-function compute_axis(f::Analysis, args...)
-    x = args[1]
-    set(f, :axis) do
-        npoints = get(f, :npoints, 100)
-        range(extrema(x)...; length = npoints)
+infer_axis(x::AbstractVector{T}, args...) where {T<:Union{Missing, Number}} = Analysis{:continuous}
+infer_axis(x::AbstractVector{T}, args...) where {T<:Union{Missing, AbstractArray}} = Analysis{:vectorial}
+infer_axis(x::AbstractVector{Missing}, args...) = error("All data is missing")
+infer_axis(x, args...) = Analysis{:discrete}
+
+get_axis(s::Analysis) = s.kwargs.axis
+
+function compute_axis(a::Analysis, args...)
+    a_inf = infer_axis(args...)(a)
+    compute_axis(a_inf, args...)
+end
+
+continuous_axis(x, args...; npoints = 100) = range(extrema(x)...; length = npoints)
+
+function compute_axis(a::Analysis{:continuous}, args...)
+    set(a, :axis) do
+        npoints = get(a, :npoints, 100)
+        continuous_axis(args..., npoints = npoints)
     end
 end
 
-function _expectedvalue(x, y; axis, estimator = mean)
-    itr = finduniquesorted(x)
-    collect_columns((key, estimator(y[idxs])) for (key, idxs) in itr)
-end
+discrete_axis(x, args...) = unique(sort(x))
 
-const expectedvalue = Analysis(_expectedvalue)
-compute_axis(f::Analysis{typeof(_expectedvalue)}, x::AbstractVector) = set(() -> unique(x), f, :axis)
-
-function _localregression(x, y; axis, kwargs...)
-    within = filter(t -> minimum(x)<= t <= maximum(x), axis)
-    if length(within) > 0
-        model = loess(convert(Vector{Float64}, x), convert(Vector{Float64}, y); kwargs...)
-        prediction = predict(model, within)
-    else
-        prediction = Float64[]
-    end
-    StructVector((within, prediction))
-end
-
-const localregression = Analysis(_localregression)
-
-function _density(x; axis, kwargs...)
-    data = pdf(kde(x; kwargs...), axis)
-    StructVector((axis, data))
-end
-
-const density = Analysis(_density)
-function compute_axis(f::Analysis{typeof(_density)}, x::AbstractVector)
-    set(f, :axis) do
-        start, stop = extrema(kde(x).x)
-        npoints = get(f, :npoints, 100)
-        range(start, stop, length = npoints)
+function compute_axis(a::Analysis{:discrete}, args...)
+    set(a, :axis) do
+        discrete_axis(args...)
     end
 end
 
-function _frequency(x; axis)
-    c = countmap(x) 
-    StructVector((axis, [get(c, x, 0) for x in axis]))
+vectorial_axis(x, args...) = axes(x[1], 1)
+
+function compute_axis(a::Analysis{:vectorial}, args...)
+    set(a, :axis) do
+        vectorial_axis(args...)
+    end
 end
 
-const frequency = Analysis(_frequency)
-compute_axis(f::Analysis{typeof(_frequency)}, x::AbstractVector) = set(() -> unique(x), f, :axis)
+has_error(a::Analysis) = has_error(getfunction(a))
+has_error(a::Analysis, args...) = has_error(infer_axis(args...)(a))
+has_error(args...) = false
 
-function _cumulative(x; axis, kwargs...)
-    data = ecdf(x)(axis)
-    StructVector((axis, data))
+_expectedvalue(x, y; axis = nothing, kwargs...) = lazy_summary(x, y; kwargs...)
+
+has_error(::typeof(_expectedvalue)) = true
+
+function _localregression(x, y; npoints = 100, axis = continuous_axis(x, y; npoints = npoints), kwargs...)
+    min, max = extrema(x)
+    model = loess(convert(Vector{Float64}, x), convert(Vector{Float64}, y); kwargs...)
+    return ((val, predict(model, val)) for (ind, val) in enumerate(axis) if min < val < max)
 end
 
-const cumulative = Analysis(_cumulative)
-
-function _hazard(t; axis, kwargs...)
-    pdf = density(; axis = axis, kwargs...)(t)
-    cdf = cumulative(; axis = axis)(t)
-    pdfs = tupleofarrays(pdf)[2]
-    cdfs = tupleofarrays(cdf)[2]
-    bs = step(axis)
-    haz = @. pdfs/(1 + bs * pdfs - cdfs)
-    StructVector((axis, haz))
+function _alignedsummary(xs, ys; axis = vectorial_axis(xs, ys), min_nobs = 2, stats = summary, kwargs...)
+    stat, func = initstat(stats; kwargs...)
+    iter = (view(y, x) for (x, y) in zip(xs, ys))
+    stats = OffsetArray([copy(stat) for _ in axis], axis)
+    fitvecmany!(stats, iter)
+    ((val, func(st)) for (val, st) in zip(axis, stats) if nobs(st) >= min_nobs)
 end
 
-const hazard = Analysis(_hazard)
+has_error(::typeof(_alignedsummary)) = true
+
+const prediction = Analysis((continuous = _localregression, discrete = _expectedvalue, vectorial = _alignedsummary))
+
+function _density(x; npoints = 100, axis = continuous_axis(x, npoints = npoints), kwargs...)
+    d = InterpKDE(kde(x; kwargs...))
+    return ((val, pdf(d, val)) for val in axis)
+end
+
+function _frequency(x; axis = discrete_axis(x), npoints = 100)
+    c = countmap(x)
+    s = sum(values(c))
+    return ((val, get(c, val, 0)/s) for val in axis)
+end
+
+const density = Analysis((continuous = _density, discrete = _frequency))
+
+function _cumulative(x; npoints = 100, axis = continuous_axis(x, npoints = npoints), kwargs...)
+    func = ecdf(x)
+    return ((val, func(val)) for val in axis)
+end
+
+function _cumulative_frequency(x; axis = discrete_axis(x, npoints = npoints), kwargs...)
+    func = ecdf(x)
+    return ((val, func(val)) for val in axis)
+end
+
+const cumulative = Analysis((continuous = _cumulative, discrete = _cumulative_frequency))
+
+function _hazard(t; npoints = 100, axis = continuous_axis(t, npoints = npoints), kwargs...)
+    pdf_iter = _density(t; axis = axis, kwargs...)
+    cdf_func = ecdf(t)
+    ((val, pdf / (1 + step(axis) * pdf - cdf_func(val))) for (val, pdf) in pdf_iter)
+end
+
+function _hazard_frequency(t; axis = discrete_axis(t), kwargs...)
+    pdf_iter = _frequency(t; axis = axis, kwargs...)
+    cdf_func = ecdf(t)
+    ((val, pdf / (1 + pdf - cdf_func(val))) for (val, pdf) in pdf_iter)
+end
+
+const hazard = Analysis((continuous = _hazard, discrete = _hazard_frequency))
