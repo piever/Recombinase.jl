@@ -15,7 +15,7 @@ const wong_colors = [
 
 const default_style_dict = Dict{Symbol, Any}(
     :color => wong_colors,
-    :markershape => [:diamond, :circle, :triangle, :star5],
+    :markershape => [:circle, :diamond, :utriangle, :star5, :cross],
     :linestyle => [:solid, :dash, :dot, :dashdot],
     :linewidth => [1,4,2,3],
     :markersize => [3,9,5,7]
