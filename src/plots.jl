@@ -79,21 +79,26 @@ function series2D(f::Union{Nothing, FunctionOrAnalysis}, t′::IndexedTable, g =
         perm, group_rows = sortpermby(t, by, return_keys = true)
         itr = finduniquesorted(group_rows, perm)
     end
-    data = collect_columns_flattened(
-        key => compute_summary(
-            f,
-            view(t, idxs),
-            error;
-            min_nobs=min_nobs,
-            select=select,
-            stats=stats,
-            filter=filter,
-            transform=transform,
-        ) for (key, idxs) in itr
+    keys = similar(group_rows, 0)
+    vals = collect_columns_flattened(
+        Base.Generator(itr) do (key, idxs)
+            v = compute_summary(
+                f,
+                view(t, idxs),
+                error;
+                min_nobs=min_nobs,
+                select=select,
+                stats=stats,
+                filter=filter,
+                transform=transform,
+            )
+            append!(keys, fill(key, length(v)))
+            return v
+        end
     )
-    res = apply_postprocess(t, data.second; select = select, postprocess = postprocess)
+    res = apply_postprocess(t, vals; select = select, postprocess = postprocess)
     plot_args, plot_kwargs = series2D(res; ribbon = ribbon)
-    plot_kwargs[:group] = columns(data.first)
+    plot_kwargs[:group] = columns(keys)
     grpd = collect_columns(key for (key, _) in itr)
     style_kwargs = Dict(kwargs)
     for (key, val) in pairs(group)

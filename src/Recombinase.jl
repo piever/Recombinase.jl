@@ -5,7 +5,7 @@ using Statistics
 using StatsBase: countmap, ecdf, sem
 using Loess: loess, predict
 using KernelDensity: pdf, kde, InterpKDE
-using StructArrays: StructVector, StructArray, finduniquesorted, uniquesorted, fieldarrays, GroupPerm
+using StructArrays: StructVector, StructArray, finduniquesorted, uniquesorted, fieldarrays, GroupPerm, StructArrays
 using IndexedTables: collect_columns, collect_columns_flattened, rows, columns, IndexedTable, colnames, pushcol, table, dropmissing
 import IndexedTables: sortpermby, lowerselection
 using ColorTypes: RGB
