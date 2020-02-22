@@ -14,7 +14,7 @@ using Observables: AbstractObservable, Observable, @map, @map!
 using Widgets: Widget, dropdown, toggle, button
 using OrderedCollections: OrderedDict
 using OnlineStatsBase: Mean, Variance, FTSeries, fit!, OnlineStat, nobs, value
-import Tables
+import Tables, TableOperations
 
 export Group, compute_summary, series2D
 export discrete

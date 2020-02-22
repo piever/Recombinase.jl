@@ -29,7 +29,7 @@ function apply_postprocess(t::IndexedTable, res; select, postprocess)
     N = length(colinds)
     cols_trimmed = cols[1:N]
     res = map(cols_trimmed, colinds) do col, ind
-        isa(ind, Integer) && ind > 0 || return col 
+        isa(ind, Integer) && ind > 0 || return col
         name = colnames(t)[ind]
         haskey(postprocess, name) || return col
         f = postprocess[name]
@@ -52,11 +52,11 @@ series2D(t, g = Group(); kwargs...) = series2D(nothing, t, g; kwargs...)
 
 function series2D(f::Union{Nothing, FunctionOrAnalysis}, t, g = Group();
                   select, error = automatic, kwargs...)
-    isa(g, Group) || (g = Group(g)) 
+    isa(g, Group) || (g = Group(g))
     by = _flatten(g.kwargs)
     err_cols = error === automatic ? () : to_tuple(error)
     sel_cols = (to_tuple(by)..., to_tuple(select)..., err_cols...)
-    coltable = Tables.columntable(Tables.select(t, sel_cols...))
+    coltable = Tables.columntable(TableOperations.select(t, sel_cols...))
     coldict = Dict(zip(sel_cols, keys(coltable)))
     to_symbol = i -> coldict[i]
     t = table(coltable, copy=false)
@@ -70,7 +70,7 @@ function series2D(f::Union{Nothing, FunctionOrAnalysis}, t′::IndexedTable, g =
     error = automatic, ribbon=false, stats=summary, filter=isfinitevalue, transform=identity, min_nobs=2, kwargs...)
 
     t = dropmissing(t′, select)
-    isa(g, Group) || (g = Group(g)) 
+    isa(g, Group) || (g = Group(g))
     group = g.kwargs
     if isempty(group)
         itr = ("" => :,)
