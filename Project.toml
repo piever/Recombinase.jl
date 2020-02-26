@@ -1,7 +1,7 @@
 name = "Recombinase"
 uuid = "ba7d4641-94f4-5bcf-8684-37ba860b1597"
 authors = ["Pietro Vertechi <pietro.vertechi@neuro.fchampalimaud.org>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
